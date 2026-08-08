@@ -759,6 +759,9 @@ main { flex: 1; }
   background: #101726;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   z-index: 2;
+  /* Selfie önizleme: ayna gibi (karşı tarafa gönderilen stream aynalanmaz) */
+  transform: scaleX(-1);
+  -webkit-transform: scaleX(-1);
 }
 
 @media (max-width: 575.98px) {
