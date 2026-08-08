@@ -1,0 +1,37 @@
+@using LanguagePractice.Web.Helpers
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    var selected = ((string?)ViewData["SelectedLang"] ?? "en").Trim().ToLowerInvariant();
+    var inputName = (string?)ViewData["LangInputName"] ?? "lang";
+    var inputId = (string?)ViewData["LangInputId"] ?? "languageCode";
+    var compact = ViewData["LangTilesCompact"] as bool? == true;
+    var counts = ViewBag.LangCounts as IReadOnlyDictionary<string, int>
+        ?? new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+}
+
+<input type="hidden" name="@inputName" id="@inputId" value="@selected" class="lang-tiles-value" />
+
+<div class="lang-tile-grid @(compact ? "compact" : "")" role="listbox" aria-label="@Localizer["Home_SelectLabel"]" data-lang-tiles>
+    @foreach (var lang in LanguageDisplay.PracticeOptions)
+    {
+        var count = LanguageDisplay.CountFor(counts, lang.Code);
+        var isSelected = string.Equals(selected, lang.Code, StringComparison.OrdinalIgnoreCase);
+        <button type="button"
+                class="lang-tile @(isSelected ? "selected" : "")"
+                role="option"
+                aria-selected="@(isSelected ? "true" : "false")"
+                data-lang="@lang.Code"
+                data-lang-tile>
+            <span class="lang-tile-flag">@LanguageDisplay.Flag(lang.Code)</span>
+            <span class="lang-tile-meta">
+                <span class="lang-tile-name">@lang.Name</span>
+                <span class="lang-tile-count">
+                    <span class="lang-tile-dot" aria-hidden="true"></span>
+                    <span data-lang-count="@lang.Code">@count</span>
+                    <span>@Localizer["Lang_Active"]</span>
+                </span>
+            </span>
+        </button>
+    }
+</div>

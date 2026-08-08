@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="LanguagePractice.Core/LanguagePractice.Core.csproj" />
+  <Project Path="LanguagePractice.Infrastructure/LanguagePractice.Infrastructure.csproj" />
+  <Project Path="LanguagePractice.Web/LanguagePractice.Web.csproj" />
+</Solution>

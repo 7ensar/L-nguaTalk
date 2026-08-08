@@ -1,0 +1,147 @@
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Lobby_Title"].Value;
+    ViewData["HideFooter"] = true;
+    var signalingUrl = (string)(ViewBag.SignalingUrl ?? "http://localhost:5050");
+    var displayName = (string)(ViewBag.DisplayName ?? "Guest");
+    var isGuest = (bool)(ViewBag.IsGuest ?? true);
+    var languageCode = (string)(ViewBag.LanguageCode ?? "en");
+    var autoStart = (bool)(ViewBag.AutoStart ?? false);
+    var userId = ViewBag.UserId as string;
+    var guestSessionId = ViewBag.GuestSessionId as Guid?;
+}
+
+<div class="lobby-page">
+    <div class="lobby-top">
+        <div>
+            <div class="fw-semibold" style="letter-spacing:-0.02em;">@Localizer["Lobby_Title"]</div>
+            <div class="small text-muted">
+                @Localizer["Lobby_Hello"] <strong style="color:var(--text)">@displayName</strong>
+                @(isGuest ? Localizer["Lobby_GuestTag"].Value : "")
+                <span class="ms-1">· @languageCode.ToUpperInvariant()</span>
+            </div>
+        </div>
+        <div id="statusText" class="lobby-status">@Localizer["Lobby_Ready"]</div>
+    </div>
+
+    <div class="lobby-layout">
+        <section class="video-stage" id="videoStage">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <div class="video-empty" id="videoEmpty">
+                <div>
+                    <strong>@Localizer["Lobby_WaitingTitle"]</strong>
+                    <span>@Localizer["Lobby_WaitingHint"]</span>
+                </div>
+            </div>
+            <video id="localVideo" class="video-local" autoplay muted playsinline></video>
+        </section>
+
+        <aside class="glass-card lobby-side">
+            <div class="lobby-side-head">
+                <h2>@Localizer["Lobby_LiveChat"]</h2>
+                <span class="chat-peer-label" id="chatPeerLabel">@Localizer["Lobby_ChatIdle"]</span>
+            </div>
+
+            <div class="live-chat" id="liveChat">
+                <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
+                <form class="chat-compose" id="chatForm">
+                    <input type="text" id="chatInput" class="form-control" maxlength="500"
+                           placeholder="@Localizer["Lobby_ChatPlaceholder"]" autocomplete="off" disabled />
+                    <button type="submit" id="chatSendBtn" class="btn btn-soft" disabled>@Localizer["Lobby_ChatSend"]</button>
+                </form>
+            </div>
+
+            <div class="control-stack">
+                <button id="nextBtn" class="btn btn-next" type="button">@Localizer["Lobby_Next"]</button>
+                <button id="joinQueueBtn" class="btn btn-soft" type="button">@Localizer["Lobby_Join"]</button>
+                <button id="leaveQueueBtn" class="btn btn-soft danger" type="button" disabled>@Localizer["Lobby_Leave"]</button>
+                <button id="reportBtn" class="btn btn-soft" type="button" disabled style="border-color:rgba(248,113,113,.45);color:#fecaca;">
+                    @Localizer["Lobby_Report"]
+                </button>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#151d2f;color:#f3f6ff;border:1px solid rgba(255,255,255,.1);border-radius:1rem;">
+            <form id="reportForm">
+                <div class="modal-header border-secondary-subtle">
+                    <h2 class="modal-title fs-5" id="reportModalLabel">@Localizer["Report_Title"]</h2>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="@Localizer["Common_Close"]"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">@Localizer["Report_Lead"]</p>
+                    <label class="form-label" for="reasonCode">@Localizer["Report_Reason"]</label>
+                    <select class="form-select mb-3" id="reasonCode" name="reasonCode" required>
+                        <option value="inappropriate">@Localizer["Report_Reason_Inappropriate"]</option>
+                        <option value="harassment">@Localizer["Report_Reason_Harassment"]</option>
+                        <option value="spam">@Localizer["Report_Reason_Spam"]</option>
+                        <option value="underage">@Localizer["Report_Reason_Underage"]</option>
+                        <option value="other">@Localizer["Report_Reason_Other"]</option>
+                    </select>
+                    <label class="form-label" for="reportDetails">@Localizer["Report_Details"]</label>
+                    <textarea class="form-control" id="reportDetails" name="details" rows="3" maxlength="2000" placeholder="@Localizer["Report_DetailsPlaceholder"]"></textarea>
+                </div>
+                <div class="modal-footer border-secondary-subtle">
+                    <button type="button" class="btn btn-soft" data-bs-dismiss="modal">@Localizer["Common_Close"]</button>
+                    <button type="submit" class="btn btn-danger">@Localizer["Report_Submit"]</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+        window.LINGUATALK = {
+            signalingUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(signalingUrl)),
+            displayName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(displayName)),
+            languageCode: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(languageCode)),
+            userId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(userId)),
+            guestSessionId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(guestSessionId?.ToString())),
+            autoStart: @Html.Raw(autoStart ? "true" : "false"),
+            i18n: {
+                ready: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Ready"].Value)),
+                connected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Connected"].Value)),
+                waiting: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Waiting"].Value)),
+                left: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Left"].Value)),
+                matched: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Matched"].Value)),
+                peerLeft: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_PeerLeft"].Value)),
+                queued: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Queued"].Value)),
+                mediaRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_MediaRequired"].Value)),
+                next: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Next"].Value)),
+                chatIdle: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_ChatIdle"].Value)),
+                chatWith: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_ChatWith"].Value)),
+                chatEmpty: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_ChatEmpty"].Value)),
+                toastSignalingConnected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_SignalingConnected"].Value)),
+                toastSignalingFailed: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_SignalingFailed"].Value)),
+                toastSignalingLost: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_SignalingLost"].Value)),
+                toastQueued: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_Queued"].Value)),
+                toastMatched: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_Matched"].Value)),
+                toastConnected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_Connected"].Value)),
+                toastPeerLeft: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_PeerLeft"].Value)),
+                toastDisconnected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_Disconnected"].Value)),
+                toastFailed: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_Failed"].Value)),
+                toastLeft: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_Left"].Value)),
+                toastMediaUnsupported: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_MediaUnsupported"].Value)),
+                toastMatchError: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_MatchError"].Value)),
+                toastSignalError: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_SignalError"].Value)),
+                toastSocketMissing: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_SocketMissing"].Value)),
+                toastGenericError: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_GenericError"].Value)),
+                toastReportSent: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportSent"].Value)),
+                toastReportFailed: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportFailed"].Value)),
+                toastReportNoPeer: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportNoPeer"].Value)),
+                toastReportRate: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportRate"].Value)),
+                toastReportEnded: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportEnded"].Value)),
+                toastCallEndedModeration: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_CallEndedModeration"].Value)),
+                toastYouBanned: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_YouBanned"].Value))
+            }
+        };
+    </script>
+    <script src="~/js/toast.js" asp-append-version="true"></script>
+    <script src="~/js/lobby.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,163 @@
+@model AdminUserDetailsViewModel
+@{
+    ViewData["Title"] = "Kullanıcı Detayı";
+}
+
+<div class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Listeye dön</a>
+    <div class="d-flex gap-2">
+        <span class="badge text-bg-warning">@Model.ReportCount rapor</span>
+        <span class="badge text-bg-danger">@Model.OpenReportCount açık</span>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success border-0">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger border-0">@err</div>
+}
+
+<div class="row g-3 g-lg-4">
+    <div class="col-12 col-lg-7">
+        <div class="panel-card mb-3">
+            <h2 class="h5 mb-3">@Model.DisplayName</h2>
+            <dl class="row mb-0">
+                <dt class="col-sm-4">E-posta</dt>
+                <dd class="col-sm-8 text-break">@Model.Email</dd>
+                <dt class="col-sm-4">Kayıt</dt>
+                <dd class="col-sm-8">@Model.CreatedAtUtc.ToLocalTime().ToString("g")</dd>
+                <dt class="col-sm-4">Son giriş</dt>
+                <dd class="col-sm-8">@(Model.LastLoginAtUtc?.ToLocalTime().ToString("g") ?? "—")</dd>
+                <dt class="col-sm-4">Roller</dt>
+                <dd class="col-sm-8">
+                    @(Model.Roles.Count == 0 ? "Yok" : string.Join(", ", Model.Roles))
+                </dd>
+                <dt class="col-sm-4">Durum</dt>
+                <dd class="col-sm-8">
+                    @if (Model.IsBanned)
+                    {
+                        <span class="badge text-bg-danger">Banlı</span>
+                        <div class="small text-muted mt-1">@Model.BanReason</div>
+                        <div class="small text-muted">@(Model.BannedAtUtc?.ToLocalTime().ToString("g"))</div>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-success">Aktif</span>
+                    }
+                </dd>
+                <dt class="col-sm-4">Ana dil</dt>
+                <dd class="col-sm-8">@(Model.NativeLanguageCode?.ToUpperInvariant() ?? "—")</dd>
+                <dt class="col-sm-4">Hedef dil</dt>
+                <dd class="col-sm-8">
+                    @(Model.TargetLanguageCode?.ToUpperInvariant() ?? "—")
+                    @if (!string.IsNullOrEmpty(Model.LanguageLevel))
+                    {
+                        <span class="badge text-bg-secondary ms-1">@Model.LanguageLevel</span>
+                    }
+                </dd>
+                <dt class="col-sm-4">Bio</dt>
+                <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Bio) ? "—" : Model.Bio)</dd>
+                <dt class="col-sm-4">İlgi alanları</dt>
+                <dd class="col-sm-8">
+                    @if (Model.Interests.Count == 0)
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                    else
+                    {
+                        <div class="interest-tags">
+                            @foreach (var tag in Model.Interests)
+                            {
+                                <span class="interest-tag">@tag</span>
+                            }
+                        </div>
+                    }
+                </dd>
+            </dl>
+        </div>
+
+        <div class="panel-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 mb-0">Raporlar (@Model.ReportCount)</h2>
+                <a class="btn btn-sm btn-outline-secondary"
+                   asp-area="Admin" asp-controller="Moderation" asp-action="Index">Tüm moderasyon</a>
+            </div>
+
+            @if (Model.Reports.Count == 0)
+            {
+                <p class="text-muted mb-0">Bu kullanıcı için henüz rapor yok.</p>
+            }
+            else
+            {
+                <div class="vstack gap-2">
+                    @foreach (var report in Model.Reports)
+                    {
+                        <div class="report-detail-card">
+                            <div class="d-flex flex-wrap justify-content-between gap-2 mb-1">
+                                <strong>@report.Reason</strong>
+                                <span class="badge text-bg-secondary">@report.Status</span>
+                            </div>
+                            <div class="small text-muted mb-1">
+                                @report.CreatedAtUtc.ToLocalTime().ToString("g")
+                                · Bildiren: @report.ReporterDisplayName
+                                @if (!string.IsNullOrEmpty(report.ReasonCode))
+                                {
+                                    <span>· @report.ReasonCode</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(report.Details))
+                            {
+                                <p class="mb-1 small">@report.Details</p>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(report.AutoAction))
+                            {
+                                <div class="small text-warning">Otomatik aksiyon: @report.AutoAction</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(report.AdminNotes))
+                            {
+                                <div class="small text-muted">Admin notu: @report.AdminNotes</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(report.RoomId))
+                            {
+                                <div class="small text-muted">Oda: <code>@report.RoomId</code></div>
+                            }
+                            <a class="small"
+                               asp-area="Admin" asp-controller="Reports" asp-action="Details" asp-route-id="@report.Id">
+                                Rapor detayına git →
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="panel-card">
+            <h2 class="h6 mb-3">Moderasyon</h2>
+            @if (Model.IsBanned)
+            {
+                <form asp-action="Unban" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-success w-100">Banı Kaldır</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="Ban" method="post" class="vstack gap-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="UserId" value="@Model.Id" />
+                    <div>
+                        <label class="form-label" for="Reason">Ban nedeni</label>
+                        <textarea class="form-control" id="Reason" name="Reason" rows="3" required minlength="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">Kullanıcıyı Banla</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

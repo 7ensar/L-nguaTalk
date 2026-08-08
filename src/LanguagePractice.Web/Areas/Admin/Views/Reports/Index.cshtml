@@ -1,0 +1,74 @@
+@model List<AdminReportListItemViewModel>
+@{
+    ViewData["Title"] = "Şikayetler";
+    var status = ViewBag.Status as string ?? "Open";
+}
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-8 col-md-4">
+        <label class="form-label">Durum</label>
+        <select class="form-select" name="status">
+            <option value="Open" selected="@(status == "Open")">Açık / İncelemede</option>
+            <option value="Resolved" selected="@(status == "Resolved")">Çözüldü</option>
+            <option value="Dismissed" selected="@(status == "Dismissed")">Reddedildi</option>
+            <option value="UnderReview" selected="@(status == "UnderReview")">İncelemede</option>
+        </select>
+    </div>
+    <div class="col-4 col-md-2">
+        <button class="btn btn-primary w-100" type="submit">Filtrele</button>
+    </div>
+</form>
+
+<div class="d-none d-md-block table-responsive panel-card p-0">
+    <table class="table table-hover align-middle mb-0 admin-table">
+        <thead>
+            <tr>
+                <th>Şikayet edilen</th>
+                <th>Neden</th>
+                <th>Bildiren</th>
+                <th>Tarih</th>
+                <th>Durum</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <div class="fw-semibold">@item.ReportedDisplayName</div>
+                    <div class="small text-muted">@item.ReportedEmail</div>
+                </td>
+                <td>@item.Reason</td>
+                <td>@item.ReporterDisplayName</td>
+                <td class="small">@item.CreatedAtUtc.ToLocalTime().ToString("g")</td>
+                <td><span class="badge text-bg-secondary">@item.Status</span></td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.Id">İncele</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-md-none vstack gap-3">
+    @foreach (var item in Model)
+    {
+        <div class="panel-card">
+            <div class="d-flex justify-content-between gap-2 mb-2">
+                <strong>@item.ReportedDisplayName</strong>
+                <span class="badge text-bg-secondary">@item.Status</span>
+            </div>
+            <div class="small text-muted mb-1">@item.ReportedEmail</div>
+            <div class="mb-2">@item.Reason</div>
+            <div class="small text-muted mb-3">Bildiren: @item.ReporterDisplayName · @item.CreatedAtUtc.ToLocalTime().ToString("g")</div>
+            <a class="btn btn-sm btn-outline-primary w-100" asp-action="Details" asp-route-id="@item.Id">İncele</a>
+        </div>
+    }
+</div>
+
+@if (Model.Count == 0)
+{
+    <p class="text-muted mt-3">Şikayet yok.</p>
+}

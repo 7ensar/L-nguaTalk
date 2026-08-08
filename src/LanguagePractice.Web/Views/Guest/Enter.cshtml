@@ -1,0 +1,36 @@
+@model LanguagePractice.Web.ViewModels.GuestLoginViewModel
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Guest_Title"].Value;
+    ViewData["SelectedLang"] = Model.PreferredLanguageCode ?? "en";
+    ViewData["LangInputName"] = "PreferredLanguageCode";
+    ViewData["LangInputId"] = "PreferredLanguageCode";
+    ViewData["LangTilesCompact"] = true;
+}
+
+<section class="auth-stage">
+    <div class="glass-card auth-card" style="width:min(100%,560px);">
+        <div class="brand-kicker">LinguaTalk</div>
+        <h1 class="h3">@Localizer["Guest_Title"]</h1>
+        <p class="text-muted mb-3">@Localizer["Guest_Lead"]</p>
+        <form asp-action="Enter" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+            <div class="mb-3">
+                <label asp-for="DisplayName" class="form-label text-muted">@Localizer["Guest_DisplayName"]</label>
+                <input asp-for="DisplayName" class="form-control" autocomplete="nickname" />
+                <span asp-validation-for="DisplayName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-muted">@Localizer["Guest_PreferredLang"]</label>
+                <partial name="_LanguageTiles" />
+            </div>
+            <button type="submit" class="btn btn-match w-100">@Localizer["Guest_Enter"]</button>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

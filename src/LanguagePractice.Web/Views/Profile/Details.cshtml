@@ -1,0 +1,138 @@
+@model LanguagePractice.Web.ViewModels.ProfileDetailsViewModel
+@using LanguagePractice.Web.Helpers
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Model.DisplayName;
+    var initial = string.IsNullOrWhiteSpace(Model.DisplayName)
+        ? "?"
+        : char.ToUpperInvariant(Model.DisplayName.Trim()[0]).ToString();
+}
+
+<section class="profile-stage">
+    <div class="site-shell profile-layout">
+        @if (TempData["Success"] is string ok)
+        {
+            <div class="alert alert-success border-0 mb-0" style="grid-column: 1 / -1;">@ok</div>
+        }
+        <article class="glass-card profile-hero">
+            <div class="profile-hero-top">
+                <div class="profile-avatar-xl @(string.IsNullOrEmpty(Model.AvatarUrl) ? "" : "has-image")">
+                    @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                    {
+                        <img src="@Model.AvatarUrl" alt="@Model.DisplayName" />
+                    }
+                    else
+                    {
+                        <span>@initial</span>
+                    }
+                </div>
+
+                <div class="profile-hero-meta">
+                    <div class="brand-kicker">LinguaTalk</div>
+                    <h1 class="profile-name">@Model.DisplayName</h1>
+                    @if (!string.IsNullOrWhiteSpace(Model.Email))
+                    {
+                        <div class="profile-email">@Model.Email</div>
+                    }
+                    <div class="profile-joined">
+                        @Localizer["Profile_MemberSince", Model.MemberSinceUtc.ToLocalTime().ToString("MMM yyyy")]
+                    </div>
+
+                    <div class="profile-badges">
+                        @if (!string.IsNullOrWhiteSpace(Model.NativeLanguageCode))
+                        {
+                            <span class="lang-badge native">
+                                <span class="lang-flag">@LanguageDisplay.Flag(Model.NativeLanguageCode)</span>
+                                <span>
+                                    <small>@Localizer["Profile_Native"]</small>
+                                    <strong>@(Model.NativeLanguageName ?? Model.NativeLanguageCode)</strong>
+                                </span>
+                            </span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.TargetLanguageCode))
+                        {
+                            <span class="lang-badge target">
+                                <span class="lang-flag">@LanguageDisplay.Flag(Model.TargetLanguageCode)</span>
+                                <span>
+                                    <small>@Localizer["Profile_Learning"]</small>
+                                    <strong>@(Model.TargetLanguageName ?? Model.TargetLanguageCode)</strong>
+                                </span>
+                            </span>
+                        }
+                        @if (Model.LanguageLevel.HasValue)
+                        {
+                            <span class="lang-badge level">
+                                <span class="level-pill">@Model.LanguageLevel</span>
+                                <span>
+                                    <small>@Localizer["Profile_Level"]</small>
+                                    <strong>CEFR</strong>
+                                </span>
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                @if (Model.IsOwnProfile)
+                {
+                    <div class="profile-actions">
+                        <a class="btn btn-primary" asp-action="Edit">@Localizer["Profile_Edit"]</a>
+                        <a class="btn btn-soft" asp-controller="Match" asp-action="Lobby">@Localizer["Nav_Lobby"]</a>
+                    </div>
+                }
+            </div>
+
+            <div class="profile-bio-block">
+                <h2 class="profile-section-title">@Localizer["Profile_About"]</h2>
+                @if (!string.IsNullOrWhiteSpace(Model.Bio))
+                {
+                    <p class="profile-bio">@Model.Bio</p>
+                }
+                else
+                {
+                    <p class="profile-bio muted">@Localizer["Profile_NoBio"]</p>
+                }
+            </div>
+
+            <div class="profile-interests-block">
+                <h2 class="profile-section-title">@Localizer["Profile_Interests"]</h2>
+                @if (Model.Interests.Count > 0)
+                {
+                    <div class="interest-tags">
+                        @foreach (var tag in Model.Interests)
+                        {
+                            <span class="interest-tag">@tag</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="profile-bio muted mb-0">@Localizer["Profile_NoInterests"]</p>
+                }
+            </div>
+        </article>
+
+        <aside class="profile-stats-col">
+            <div class="profile-stat-card">
+                <div class="stat-icon talk"></div>
+                <div class="stat-label">@Localizer["Profile_Stat_TalkTime"]</div>
+                <div class="stat-value">@Model.Stats.FormattedTalkTime</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-icon partners"></div>
+                <div class="stat-label">@Localizer["Profile_Stat_Partners"]</div>
+                <div class="stat-value">@Model.Stats.UniquePartners</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-icon calls"></div>
+                <div class="stat-label">@Localizer["Profile_Stat_Calls"]</div>
+                <div class="stat-value">@Model.Stats.CompletedCalls</div>
+            </div>
+            <div class="profile-stat-card">
+                <div class="stat-icon matches"></div>
+                <div class="stat-label">@Localizer["Profile_Stat_Matches"]</div>
+                <div class="stat-value">@Model.Stats.TotalMatches</div>
+            </div>
+        </aside>
+    </div>
+</section>

@@ -1,0 +1,13 @@
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["AccessDenied_Title"].Value;
+}
+
+<section class="auth-stage">
+    <div class="glass-card auth-card text-center">
+        <h1 class="h3 mb-3">@Localizer["AccessDenied_Title"]</h1>
+        <p class="text-muted mb-4">@Localizer["AccessDenied_Message"]</p>
+        <a class="btn btn-primary" asp-controller="Home" asp-action="Index">@Localizer["AccessDenied_Home"]</a>
+    </div>
+</section>

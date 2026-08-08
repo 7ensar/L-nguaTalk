@@ -1,0 +1,37 @@
+﻿@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = "LinguaTalk";
+    var online = (int)(ViewBag.OnlineCount ?? 1);
+    ViewData["SelectedLang"] = "en";
+    ViewData["LangInputName"] = "lang";
+    ViewData["LangInputId"] = "homeLang";
+}
+
+<section class="home-stage">
+    <div class="site-shell home-grid">
+        <div class="glass-card home-panel">
+            <div class="brand-kicker">LinguaTalk Live</div>
+            <h1 class="home-title">@Localizer["Home_AskLanguage"]</h1>
+
+            <form asp-controller="Match" asp-action="Lobby" method="get" class="home-select home-select-wide" id="matchForm">
+                <input type="hidden" name="auto" value="true" />
+                <label class="mb-2">@Localizer["Home_SelectLabel"]</label>
+                <partial name="_LanguageTiles" />
+                <button type="submit" class="btn btn-match mt-3">@Localizer["Home_MatchNow"]</button>
+            </form>
+
+            <div class="home-subactions">
+                <a class="btn-ghost" asp-controller="Account" asp-action="Register">@Localizer["Nav_Register"]</a>
+                <a class="btn-ghost" asp-controller="Guest" asp-action="Enter">@Localizer["Nav_Guest"]</a>
+            </div>
+        </div>
+
+        <aside class="glass-card online-card">
+            <div class="online-label">@Localizer["Home_OnlineLabel"]</div>
+            <div class="online-value" id="onlineCount">@online</div>
+            <div class="online-pulse">@Localizer["Home_OnlineLive"]</div>
+            <p class="small text-muted mt-3 mb-0">@Localizer["Home_OnlineHint"]</p>
+        </aside>
+    </div>
+</section>

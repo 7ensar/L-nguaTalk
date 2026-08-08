@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.swp
+.dotnet-cli/
+
+# Node
+node_modules/
+npm-debug.log*
+.env
+dist/
+
+# IDE / OS
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# Secrets / local
+appsettings.*.local.json
+*.pfx
+*.db
+*.db-shm
+*.db-wal
+*.log
+**/App_Data/*.db
+**/App_Data/*.db-*

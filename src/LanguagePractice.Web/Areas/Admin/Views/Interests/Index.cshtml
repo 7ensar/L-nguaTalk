@@ -1,0 +1,92 @@
+@model List<LanguagePractice.Core.Entities.InterestTag>
+@{
+    ViewData["Title"] = "İlgi Alanı Etiketleri";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">İlgi alanı etiketleri</h1>
+        <p class="text-muted mb-0 small">Profil düzenleme ekranında kullanıcıların seçebileceği etiketler.</p>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success border-0">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger border-0">@err</div>
+}
+
+<div class="row g-3">
+    <div class="col-12 col-lg-4">
+        <div class="panel-card">
+            <h2 class="h6 mb-3">Yeni etiket ekle</h2>
+            <form asp-action="Create" method="post" class="vstack gap-3">
+                @Html.AntiForgeryToken()
+                <div>
+                    <label class="form-label" for="DisplayName">Etiket adı</label>
+                    <input class="form-control" id="DisplayName" name="DisplayName" maxlength="64" required placeholder="örn. Photography" />
+                </div>
+                <button type="submit" class="btn btn-primary">Ekle</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-12 col-lg-8">
+        <div class="table-responsive panel-card p-0">
+            <table class="table table-hover align-middle mb-0 admin-table">
+                <thead>
+                    <tr>
+                        <th>Etiket</th>
+                        <th>Slug</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-muted p-3">Henüz etiket yok.</td></tr>
+                }
+                else
+                {
+                    foreach (var tag in Model)
+                    {
+                        <tr>
+                            <td><span class="interest-tag">@tag.DisplayName</span></td>
+                            <td><code>@tag.Slug</code></td>
+                            <td>
+                                @if (tag.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Pasif</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <form asp-action="Toggle" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@tag.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                            @(tag.IsActive ? "Pasifleştir" : "Aktifleştir")
+                                        </button>
+                                    </form>
+                                    <form asp-action="Delete" method="post" onsubmit="return confirm('Bu etiketi silmek istiyor musun?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@tag.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

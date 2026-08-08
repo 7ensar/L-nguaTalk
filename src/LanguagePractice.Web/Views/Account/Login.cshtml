@@ -1,0 +1,36 @@
+@model LanguagePractice.Web.ViewModels.LoginViewModel
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Login_Title"].Value;
+}
+
+<section class="auth-stage">
+    <div class="glass-card auth-card">
+        <div class="brand-kicker">LinguaTalk</div>
+        <h1 class="h3">@Localizer["Login_Title"]</h1>
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label text-muted">@Localizer["Login_Email"]</label>
+                <input asp-for="Email" class="form-control" autocomplete="username" inputmode="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label text-muted">@Localizer["Login_Password"]</label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label">@Localizer["Login_Remember"]</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">@Localizer["Login_Submit"]</button>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

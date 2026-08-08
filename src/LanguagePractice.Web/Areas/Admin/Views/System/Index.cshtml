@@ -1,0 +1,48 @@
+@using LanguagePractice.Core.Interfaces
+@{
+    ViewData["Title"] = "Sistem";
+    var signaling = (SignalingStats)ViewBag.Signaling;
+}
+
+<div class="row g-3 g-lg-4">
+    <div class="col-12 col-md-6">
+        <div class="panel-card h-100">
+            <h2 class="h6 mb-3">Uygulama</h2>
+            <dl class="row mb-0 small">
+                <dt class="col-5">Ortam</dt>
+                <dd class="col-7">@ViewBag.Environment</dd>
+                <dt class="col-5">DB Provider</dt>
+                <dd class="col-7"><code>@ViewBag.DatabaseProvider</code></dd>
+                <dt class="col-5">Diller</dt>
+                <dd class="col-7">@ViewBag.Languages</dd>
+                <dt class="col-5">Misafir oturumu</dt>
+                <dd class="col-7">@ViewBag.GuestSessions</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="panel-card h-100">
+            <h2 class="h6 mb-3">Signaling servisi</h2>
+            <dl class="row mb-0 small">
+                <dt class="col-5">URL</dt>
+                <dd class="col-7 text-break"><code>@ViewBag.SignalingUrl</code></dd>
+                <dt class="col-5">Bağlantı</dt>
+                <dd class="col-7">@signaling.ActiveConnections</dd>
+                <dt class="col-5">Aktif oda</dt>
+                <dd class="col-7">@signaling.ActiveRooms</dd>
+                <dt class="col-5">Kuyruk</dt>
+                <dd class="col-7">@signaling.QueuedTotal</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card mt-3 mt-lg-4">
+    <h2 class="h6 mb-2">Yönetim notları</h2>
+    <ul class="mb-0 small text-muted">
+        <li>Admin erişimi <code>[Authorize(Roles = "Admin")]</code> ile korunur.</li>
+        <li>Varsayılan admin seed: <code>AdminSeed</code> ayarları (<code>appsettings</code>).</li>
+        <li>Banlanan kullanıcılar giriş yapamaz; security stamp yenilenir.</li>
+        <li>Kuyruk istatistiği Node <code>/stats</code> endpoint’inden çekilir.</li>
+    </ul>
+</div>

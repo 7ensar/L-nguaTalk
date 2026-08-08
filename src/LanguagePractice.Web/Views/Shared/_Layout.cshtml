@@ -1,0 +1,95 @@
+﻿@using LanguagePractice.Core.Constants
+@using LanguagePractice.Web.Localization
+@using System.Globalization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    var uiCulture = CultureInfo.CurrentUICulture.Name;
+    var isRtl = AppCultures.IsRtl(uiCulture);
+    var isAuth = User.Identity?.IsAuthenticated == true;
+    var display = isAuth ? (User.Identity!.Name ?? "U") : "";
+    var initial = string.IsNullOrWhiteSpace(display) ? "?" : char.ToUpperInvariant(display.Trim()[0]).ToString();
+    var hideFooter = ViewData["HideFooter"] as bool? == true;
+}
+<!DOCTYPE html>
+<html lang="@AppCultures.Normalize(uiCulture)" dir="@(isRtl ? "rtl" : "ltr")">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>@ViewData["Title"] · LinguaTalk</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="lt-header">
+        <div class="lt-header-inner">
+            <a class="lt-logo" asp-area="" asp-controller="Home" asp-action="Index">
+                <span class="lt-logo-mark">L</span>
+                <span>LinguaTalk</span>
+            </a>
+
+            <div class="lt-header-actions">
+                @await Component.InvokeAsync("LanguageSwitcher")
+
+                @if (isAuth)
+                {
+                    <div class="dropdown">
+                        <button class="glass-btn profile-toggle dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="profile-avatar">@initial</span>
+                            <span class="d-none d-sm-inline text-truncate" style="max-width: 120px;">@display</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end profile-menu">
+                            <li>
+                                <a class="dropdown-item" asp-area="" asp-controller="Profile" asp-action="Index">@Localizer["Nav_Profile"]</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="" asp-controller="Profile" asp-action="Edit">@Localizer["Nav_EditProfile"]</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-area="" asp-controller="Match" asp-action="Lobby">@Localizer["Nav_Lobby"]</a>
+                            </li>
+                            @if (User.IsInRole(AppRoles.Admin))
+                            {
+                                <li>
+                                    <a class="dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@Localizer["Nav_Admin"]</a>
+                                </li>
+                            }
+                            <li><hr class="dropdown-divider opacity-25" /></li>
+                            <li>
+                                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                                    <button type="submit" class="dropdown-item">@Localizer["Nav_Logout"]</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a class="glass-btn btn btn-sm d-none d-sm-inline-flex" asp-area="" asp-controller="Account" asp-action="Login">@Localizer["Nav_Login"]</a>
+                    <a class="btn btn-primary btn-sm" asp-area="" asp-controller="Account" asp-action="Register">@Localizer["Nav_Register"]</a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    @if (!hideFooter)
+    {
+        <footer class="site-footer">
+            <div class="site-shell d-flex flex-column flex-sm-row justify-content-between gap-1">
+                <span>@Localizer["Footer_Copyright", DateTime.UtcNow.Year]</span>
+                <a class="link-secondary" style="color: inherit;" asp-area="" asp-controller="Home" asp-action="Privacy">@Localizer["Footer_Privacy"]</a>
+            </div>
+        </footer>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/lang-tiles.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

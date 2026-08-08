@@ -1,0 +1,156 @@
+@model AdminModerationPageViewModel
+@{
+    ViewData["Title"] = "Raporlar ve Banlılar";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+    <div>
+        <p class="text-muted mb-0">Canlı şikayetler ve aktif banlar. Sayfa ~10 sn’de bir yenilenir.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge text-bg-warning">Açık/İnceleme: @Model.OpenReportCount</span>
+        <span class="badge text-bg-danger">Aktif ban: @Model.ActiveBanCount</span>
+        <a class="btn btn-sm btn-outline-light" asp-action="Index">Yenile</a>
+    </div>
+</div>
+
+<ul class="nav nav-pills gap-2 mb-3" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-reports" type="button">Şikayetler</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-bans" type="button">Banlılar</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="tab-reports">
+        <div class="table-responsive panel-card p-0">
+            <table class="table table-hover align-middle mb-0 admin-table">
+                <thead>
+                    <tr>
+                        <th>Zaman</th>
+                        <th>Şikayet edilen</th>
+                        <th>Sebep</th>
+                        <th class="d-none d-lg-table-cell">Bildiren</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Reports)
+                {
+                    <tr>
+                        <td class="small">@item.CreatedAtUtc.ToLocalTime().ToString("g")</td>
+                        <td>
+                            <div class="fw-semibold">@item.ReportedDisplayName</div>
+                            <div class="small text-muted">@(string.IsNullOrWhiteSpace(item.ReportedEmail) ? (item.ReportedGuestSessionId.HasValue ? "Misafir" : "Socket") : item.ReportedEmail)</div>
+                            @if (!string.IsNullOrWhiteSpace(item.AutoAction))
+                            {
+                                <span class="badge text-bg-secondary mt-1">@item.AutoAction</span>
+                            }
+                        </td>
+                        <td>
+                            <div>@item.Reason</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Details))
+                            {
+                                <div class="small text-muted text-truncate" style="max-width:220px;">@item.Details</div>
+                            }
+                        </td>
+                        <td class="d-none d-lg-table-cell">@item.ReporterDisplayName</td>
+                        <td><span class="badge text-bg-secondary">@item.Status</span></td>
+                        <td class="text-end">
+                            <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+                                @if (!string.IsNullOrWhiteSpace(item.ReportedUserId) || item.ReportedGuestSessionId.HasValue)
+                                {
+                                    <form asp-action="QuickBan" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="reportId" value="@item.Id" />
+                                        <input type="hidden" name="banType" value="temporary" />
+                                        <button class="btn btn-sm btn-warning" type="submit">Geçici Ban</button>
+                                    </form>
+                                    <form asp-action="QuickBan" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="reportId" value="@item.Id" />
+                                        <input type="hidden" name="banType" value="permanent" />
+                                        <button class="btn btn-sm btn-danger" type="submit">Kalıcı Ban</button>
+                                    </form>
+                                }
+                                <form asp-action="Dismiss" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="reportId" value="@item.Id" />
+                                    <button class="btn btn-sm btn-outline-light" type="submit">Reddet</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Reports.Count == 0)
+        {
+            <p class="text-muted mt-3">Henüz şikayet yok.</p>
+        }
+    </div>
+
+    <div class="tab-pane fade" id="tab-bans">
+        <div class="table-responsive panel-card p-0">
+            <table class="table table-hover align-middle mb-0 admin-table">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı</th>
+                        <th>Tip</th>
+                        <th>Neden</th>
+                        <th class="d-none d-md-table-cell">Bitiş</th>
+                        <th class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var ban in Model.Bans)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@ban.DisplayName</div>
+                            <div class="small text-muted">@(string.IsNullOrWhiteSpace(ban.Email) ? "Misafir" : ban.Email)</div>
+                            @if (ban.IsSystemGenerated)
+                            {
+                                <span class="badge text-bg-info mt-1">Sistem</span>
+                            }
+                        </td>
+                        <td>
+                            @if (ban.BanType == BanType.Permanent)
+                            {
+                                <span class="badge text-bg-danger">Kalıcı</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-warning">Geçici</span>
+                            }
+                        </td>
+                        <td class="small">@ban.Reason</td>
+                        <td class="d-none d-md-table-cell small">@(ban.ExpiresAtUtc?.ToLocalTime().ToString("g") ?? "—")</td>
+                        <td class="text-end">
+                            <form asp-action="LiftBan" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="banId" value="@ban.Id" />
+                                <button class="btn btn-sm btn-success" type="submit">Banı Kaldır</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Bans.Count == 0)
+        {
+            <p class="text-muted mt-3">Aktif ban yok.</p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        setTimeout(() => location.reload(), 10000);
+    </script>
+}

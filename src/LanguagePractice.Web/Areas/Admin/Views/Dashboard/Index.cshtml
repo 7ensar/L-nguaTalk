@@ -1,0 +1,94 @@
+@model AdminDashboardStats
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+    <p class="text-muted mb-0">Anlık platform özeti. Kuyruk verisi signaling servisinden gelir.</p>
+    <a class="btn btn-sm btn-outline-primary align-self-start" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Yenile</a>
+</div>
+
+<div class="row g-3 g-lg-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Aktif (15 dk)</div>
+            <div class="stat-value">@Model.ActiveUsersLast15Min</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Kayıtlı kullanıcı</div>
+            <div class="stat-value">@Model.TotalRegisteredUsers</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card accent">
+            <div class="stat-label">Kuyruktaki</div>
+            <div class="stat-value">@Model.QueuedUsers</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Toplam görüşme</div>
+            <div class="stat-value">@Model.TotalMatches</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Tamamlanan</div>
+            <div class="stat-value">@Model.CompletedCalls</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-label">Aktif çağrı / oda</div>
+            <div class="stat-value">@Model.ActiveCalls</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card warn">
+            <div class="stat-label">Açık şikayet</div>
+            <div class="stat-value">@Model.OpenReports</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card danger">
+            <div class="stat-label">Banlı kullanıcı</div>
+            <div class="stat-value">@Model.BannedUsers</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 g-lg-4 mt-1">
+    <div class="col-12 col-lg-6">
+        <div class="panel-card h-100">
+            <h2 class="h6 mb-3">Kuyruk (dile göre)</h2>
+            @if (Model.QueueByLanguage.Count == 0)
+            {
+                <p class="text-muted small mb-0">Şu an kuyruk boş veya signaling kapalı.</p>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model.QueueByLanguage.OrderByDescending(x => x.Value))
+                    {
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-uppercase">@item.Key</span>
+                            <span class="badge text-bg-secondary">@item.Value</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="panel-card h-100">
+            <h2 class="h6 mb-3">Hızlı işlemler</h2>
+            <div class="d-grid gap-2">
+                <a class="btn btn-outline-dark" asp-area="Admin" asp-controller="Users" asp-action="Index">Kullanıcı yönetimi</a>
+                <a class="btn btn-outline-dark" asp-area="Admin" asp-controller="Reports" asp-action="Index">Şikayet kuyruğu</a>
+                <a class="btn btn-outline-dark" asp-area="Admin" asp-controller="System" asp-action="Index">Sistem durumu</a>
+            </div>
+        </div>
+    </div>
+</div>

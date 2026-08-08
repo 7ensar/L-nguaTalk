@@ -1,0 +1,34 @@
+@model LanguagePractice.Web.ViewComponents.LanguageSwitcherModel
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+
+<div class="dropdown language-switcher">
+    <button class="glass-btn dropdown-toggle"
+            type="button"
+            id="languageSwitcherBtn"
+            data-bs-toggle="dropdown"
+            data-bs-display="static"
+            aria-expanded="false"
+            aria-label="@Localizer["Lang_Change"]">
+        <span class="lang-code text-uppercase">@Model.CurrentCode.Split('-')[0]</span>
+        <span class="d-none d-md-inline text-truncate" style="max-width: 6.5rem; font-weight: 500; opacity: .85;">@Model.Current.NativeName</span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end language-menu p-2" aria-labelledby="languageSwitcherBtn">
+        <div class="small px-2 pb-2" style="color: var(--text-muted);">@Localizer["Lang_Label"]</div>
+        <div class="language-grid">
+            @foreach (var culture in Model.Cultures)
+            {
+                <form asp-controller="Culture" asp-action="Set" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="culture" value="@culture.Code" />
+                    <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                    <button type="submit"
+                            class="dropdown-item language-item @(culture.Code == Model.CurrentCode ? "active" : "")">
+                        <span class="fw-semibold">@culture.NativeName</span>
+                        <span class="small d-block">@culture.EnglishName</span>
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

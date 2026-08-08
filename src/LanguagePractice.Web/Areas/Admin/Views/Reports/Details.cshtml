@@ -1,0 +1,71 @@
+@model UserReport
+@{
+    ViewData["Title"] = "Şikayet Detayı";
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Listeye dön</a>
+</div>
+
+<div class="row g-3 g-lg-4">
+    <div class="col-12 col-lg-7">
+        <div class="panel-card">
+            <h2 class="h5 mb-3">@Model.Reason</h2>
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Şikayet edilen</dt>
+                <dd class="col-sm-8">
+                    @if (!string.IsNullOrEmpty(Model.ReportedUserId) && Model.ReportedUser is not null)
+                    {
+                        <a asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@Model.ReportedUserId">
+                            @Model.ReportedUser.DisplayName
+                        </a>
+                    }
+                    else
+                    {
+                        <span>@(Model.ReportedPeerDisplayName ?? Model.ReportedGuestSessionId?.ToString() ?? "Misafir / bilinmiyor")</span>
+                    }
+                </dd>
+                <dt class="col-sm-4">Bildiren</dt>
+                <dd class="col-sm-8">@(Model.ReporterUser?.DisplayName ?? "Anonim")</dd>
+                <dt class="col-sm-4">Durum</dt>
+                <dd class="col-sm-8"><span class="badge text-bg-secondary">@Model.Status</span></dd>
+                <dt class="col-sm-4">Tarih</dt>
+                <dd class="col-sm-8">@Model.CreatedAtUtc.ToLocalTime().ToString("g")</dd>
+                <dt class="col-sm-4">Detay</dt>
+                <dd class="col-sm-8">@(Model.Details ?? "—")</dd>
+                <dt class="col-sm-4">Admin notu</dt>
+                <dd class="col-sm-8">@(Model.AdminNotes ?? "—")</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="col-12 col-lg-5">
+        <div class="panel-card">
+            <h2 class="h6 mb-3">Karar ver</h2>
+            <form asp-action="Resolve" method="post" class="vstack gap-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ReportId" value="@Model.Id" />
+                <div>
+                    <label class="form-label">Durum</label>
+                    <select class="form-select" name="Status">
+                        <option value="@ReportStatus.UnderReview">İncelemeye al</option>
+                        <option value="@ReportStatus.Resolved" selected>Çözüldü</option>
+                        <option value="@ReportStatus.Dismissed">Reddet</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Admin notu</label>
+                    <textarea class="form-control" name="AdminNotes" rows="3"></textarea>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="AlsoBanUser" value="true" id="AlsoBanUser" />
+                    <label class="form-check-label" for="AlsoBanUser">Aynı anda kullanıcıyı banla</label>
+                </div>
+                <div>
+                    <label class="form-label">Ban nedeni (opsiyonel)</label>
+                    <input class="form-control" name="BanReason" />
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Kaydet</button>
+            </form>
+        </div>
+    </div>
+</div>

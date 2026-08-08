@@ -1,0 +1,172 @@
+@model LanguagePractice.Web.ViewModels.ProfileEditViewModel
+@using LanguagePractice.Core.Entities
+@using LanguagePractice.Core.Enums
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Profile_EditTitle"].Value;
+    var levels = ViewBag.Levels as LanguageLevel[] ?? Enum.GetValues<LanguageLevel>();
+    var available = ViewBag.AvailableInterests as List<InterestTag> ?? new List<InterestTag>();
+    var selected = new HashSet<string>(
+        (Model.InterestsRaw ?? "").Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+        StringComparer.OrdinalIgnoreCase);
+    var initial = string.IsNullOrWhiteSpace(Model.DisplayName)
+        ? "?"
+        : char.ToUpperInvariant(Model.DisplayName.Trim()[0]).ToString();
+}
+
+<section class="profile-stage">
+    <div class="site-shell" style="max-width: 760px;">
+        <div class="glass-card profile-edit-card">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                <div>
+                    <div class="brand-kicker">LinguaTalk</div>
+                    <h1 class="h3 mb-0">@Localizer["Profile_EditTitle"]</h1>
+                    <p class="text-muted mb-0 mt-1">@Localizer["Profile_EditLead"]</p>
+                </div>
+                <a class="btn btn-soft btn-sm" asp-action="Index">@Localizer["Profile_Back"]</a>
+            </div>
+
+            @if (TempData["Success"] is string ok)
+            {
+                <div class="alert alert-success border-0">@ok</div>
+            }
+
+            <form asp-action="Edit" method="post" enctype="multipart/form-data" id="profileEditForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="avatar-edit-row mb-4">
+                    <div class="profile-avatar-xl sm @(string.IsNullOrEmpty(Model.CurrentAvatarUrl) ? "" : "has-image")" id="avatarPreviewWrap">
+                        @if (!string.IsNullOrEmpty(Model.CurrentAvatarUrl))
+                        {
+                            <img src="@Model.CurrentAvatarUrl" alt="" id="avatarPreviewImg" />
+                        }
+                        else
+                        {
+                            <span id="avatarPreviewInitial">@initial</span>
+                        }
+                    </div>
+                    <div class="avatar-edit-controls">
+                        <label class="form-label text-muted mb-1">@Localizer["Profile_Avatar"]</label>
+                        <input asp-for="AvatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="form-control" id="avatarFileInput" />
+                        <div class="form-text">@Localizer["Profile_AvatarHint"]</div>
+                        @if (!string.IsNullOrEmpty(Model.CurrentAvatarUrl))
+                        {
+                            <div class="form-check mt-2">
+                                <input asp-for="RemoveAvatar" class="form-check-input" />
+                                <label asp-for="RemoveAvatar" class="form-check-label">@Localizer["Profile_RemoveAvatar"]</label>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DisplayName" class="form-label text-muted">@Localizer["Profile_DisplayName"]</label>
+                    <input asp-for="DisplayName" class="form-control" maxlength="64" />
+                    <span asp-validation-for="DisplayName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Bio" class="form-label text-muted">@Localizer["Profile_Bio"]</label>
+                    <textarea asp-for="Bio" class="form-control" rows="4" maxlength="1000" placeholder="@Localizer["Profile_BioPlaceholder"]"></textarea>
+                    <span asp-validation-for="Bio" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="NativeLanguageCode" class="form-label text-muted">@Localizer["Profile_Native"]</label>
+                        <select asp-for="NativeLanguageCode" asp-items="Model.LanguageOptions" class="form-select">
+                            <option value="">@Localizer["Profile_SelectLanguage"]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="TargetLanguageCode" class="form-label text-muted">@Localizer["Profile_Learning"]</label>
+                        <select asp-for="TargetLanguageCode" asp-items="Model.LanguageOptions" class="form-select">
+                            <option value="">@Localizer["Profile_SelectLanguage"]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <fieldset class="mb-4">
+                    <legend class="form-label text-muted fs-6 mb-2">@Localizer["Profile_Level"]</legend>
+                    <div class="level-grid">
+                        @foreach (var level in levels)
+                        {
+                            var id = $"level_{level}";
+                            <input class="btn-check" type="radio" name="LanguageLevel" id="@id" value="@level"
+                                   @(Model.LanguageLevel == level ? "checked" : null) />
+                            <label class="level-option" for="@id">@level</label>
+                        }
+                    </div>
+                </fieldset>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted">@Localizer["Profile_Interests"]</label>
+                    <p class="small text-muted mb-2">@Localizer["Profile_InterestsHint"]</p>
+                    <input type="hidden" asp-for="InterestsRaw" id="InterestsRaw" />
+                    @if (available.Count == 0)
+                    {
+                        <p class="text-muted small mb-0">@Localizer["Profile_NoTagsAvailable"]</p>
+                    }
+                    else
+                    {
+                        <div class="interest-pick-grid" id="interestPickGrid">
+                            @foreach (var tag in available)
+                            {
+                                <label class="interest-pick @(selected.Contains(tag.Slug) ? "selected" : "")">
+                                    <input type="checkbox" class="interest-check" value="@tag.Slug"
+                                           @(selected.Contains(tag.Slug) ? "checked" : null) />
+                                    <span>@tag.DisplayName</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="IsDiscoverable" class="form-check-input" />
+                    <label asp-for="IsDiscoverable" class="form-check-label">@Localizer["Profile_Discoverable"]</label>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">@Localizer["Profile_Save"]</button>
+                    <a class="btn btn-soft" asp-action="Index">@Localizer["Profile_Cancel"]</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const rawEl = document.getElementById("InterestsRaw");
+            const grid = document.getElementById("interestPickGrid");
+            const fileInput = document.getElementById("avatarFileInput");
+            const previewWrap = document.getElementById("avatarPreviewWrap");
+
+            function sync() {
+                if (!rawEl || !grid) return;
+                const values = [...grid.querySelectorAll(".interest-check:checked")].map(x => x.value);
+                rawEl.value = values.join(",");
+                grid.querySelectorAll(".interest-pick").forEach((label) => {
+                    const checked = label.querySelector(".interest-check")?.checked;
+                    label.classList.toggle("selected", !!checked);
+                });
+            }
+
+            grid?.addEventListener("change", sync);
+            sync();
+
+            fileInput?.addEventListener("change", () => {
+                const file = fileInput.files?.[0];
+                if (!file) return;
+                const url = URL.createObjectURL(file);
+                previewWrap.classList.add("has-image");
+                previewWrap.innerHTML = `<img src="${url}" alt="" id="avatarPreviewImg" />`;
+            });
+        })();
+    </script>
+}

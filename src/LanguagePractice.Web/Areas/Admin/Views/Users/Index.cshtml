@@ -1,0 +1,73 @@
+@model List<AdminUserListItemViewModel>
+@{
+    ViewData["Title"] = "Kullanıcılar";
+    var q = ViewBag.Query as string;
+    var filter = ViewBag.Filter as string ?? "all";
+}
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-12 col-md-6">
+        <label class="form-label">Ara</label>
+        <input class="form-control" name="q" value="@q" placeholder="E-posta veya görünen ad" />
+    </div>
+    <div class="col-8 col-md-4">
+        <label class="form-label">Filtre</label>
+        <select class="form-select" name="filter">
+            @if (filter == "all") { <option value="all" selected>Tümü</option> } else { <option value="all">Tümü</option> }
+            @if (filter == "active") { <option value="active" selected>Aktif</option> } else { <option value="active">Aktif</option> }
+            @if (filter == "banned") { <option value="banned" selected>Banlı</option> } else { <option value="banned">Banlı</option> }
+        </select>
+    </div>
+    <div class="col-4 col-md-2">
+        <button class="btn btn-primary w-100" type="submit">Uygula</button>
+    </div>
+</form>
+
+<div class="table-responsive panel-card p-0">
+    <table class="table table-hover align-middle mb-0 admin-table">
+        <thead>
+            <tr>
+                <th>Kullanıcı</th>
+                <th class="d-none d-md-table-cell">Kayıt</th>
+                <th class="d-none d-lg-table-cell">Son giriş</th>
+                <th>Durum</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>
+                    <div class="fw-semibold">@user.DisplayName</div>
+                    <div class="small text-muted text-break">@user.Email</div>
+                </td>
+                <td class="d-none d-md-table-cell small">@user.CreatedAtUtc.ToLocalTime().ToString("g")</td>
+                <td class="d-none d-lg-table-cell small">@(user.LastLoginAtUtc?.ToLocalTime().ToString("g") ?? "—")</td>
+                <td>
+                    @if (user.IsBanned)
+                    {
+                        <span class="badge text-bg-danger">Banlı</span>
+                    }
+                    else if (user.IsActive)
+                    {
+                        <span class="badge text-bg-success">Aktif</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">Pasif</span>
+                    }
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@user.Id">Detay</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.Count == 0)
+{
+    <p class="text-muted mt-3">Kayıt bulunamadı.</p>
+}
