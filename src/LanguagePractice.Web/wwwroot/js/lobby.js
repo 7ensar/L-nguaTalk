@@ -245,9 +245,11 @@
 
       socket = io(cfg.signalingUrl, {
         transports: ["websocket", "polling"],
+        withCredentials: true,
         reconnection: true,
-        reconnectionAttempts: 8,
-        timeout: 10000
+        reconnectionAttempts: 12,
+        reconnectionDelay: 1000,
+        timeout: 20000
       });
 
       const onConnect = () => {

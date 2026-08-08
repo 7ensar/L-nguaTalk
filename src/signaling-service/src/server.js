@@ -10,13 +10,18 @@ import { RateLimiter } from "./rateLimit.js";
 
 const PORT = Number(process.env.PORT || 5050);
 const MODERATION_KEY = process.env.MODERATION_KEY || "dev-moderation-key";
-const corsOrigin = (process.env.CORS_ORIGIN || "*")
+const corsOrigin = (process.env.CORS_ORIGIN || "https://l-nguatalk.onrender.com")
   .split(",")
   .map((x) => x.trim())
   .filter(Boolean);
+const allowAllOrigins = corsOrigin.includes("*");
 
 const app = express();
-app.use(cors({ origin: corsOrigin.includes("*") ? true : corsOrigin }));
+app.set("trust proxy", 1);
+app.use(cors({
+  origin: allowAllOrigins ? true : corsOrigin,
+  credentials: true
+}));
 app.use(express.json({ limit: "32kb" }));
 
 const queue = new MatchQueue();
@@ -48,9 +53,11 @@ app.get("/health", (_req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: corsOrigin.includes("*") ? true : corsOrigin,
-    methods: ["GET", "POST"]
+    origin: allowAllOrigins ? true : corsOrigin,
+    methods: ["GET", "POST"],
+    credentials: true
   },
+  transports: ["websocket", "polling"],
   maxHttpBufferSize: 1e5,
   connectTimeout: 10000
 });
@@ -370,6 +377,7 @@ async function notifyAspNetMatch(payload) {
   }
 }
 
-server.listen(PORT, () => {
-  console.log(`LinguaTalk signaling listening on http://localhost:${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`LinguaTalk signaling listening on 0.0.0.0:${PORT}`);
+  console.log(`CORS_ORIGIN=${corsOrigin.join(",")}`);
 });

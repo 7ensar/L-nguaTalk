@@ -47,6 +47,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
     Database__Provider=Sqlite \
     ConnectionStrings__Sqlite="Data Source=/data/linguatalk.db" \
     ConnectionStrings__DefaultConnection="Data Source=/data/linguatalk.db" \
+    Signaling__PublicUrl=https://l-nguatalk-1.onrender.com \
+    Moderation__SignalingModerationKey=dev-moderation-key \
     DOTNET_EnableDiagnostics=0 \
     DOTNET_NOLOGO=1 \
     DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false \

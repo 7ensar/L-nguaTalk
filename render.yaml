@@ -1,4 +1,5 @@
 services:
+  # Node.js signaling / WebRTC matchmaking
   - type: web
     name: linguatalk-signaling
     runtime: node
@@ -6,6 +7,42 @@ services:
     buildCommand: npm install
     startCommand: node server.js
     plan: free
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: "20"
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://l-nguatalk.onrender.com
+      - key: ASPNET_API_BASE_URL
+        value: https://l-nguatalk.onrender.com
+      - key: MODERATION_KEY
+        value: dev-moderation-key
+
+  # ASP.NET Core web (Docker)
+  - type: web
+    name: linguatalk-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Database__Provider
+        value: Sqlite
+      - key: ConnectionStrings__Sqlite
+        value: Data Source=/data/linguatalk.db
+      - key: Signaling__PublicUrl
+        value: https://l-nguatalk-1.onrender.com
+      - key: Moderation__SignalingModerationKey
+        value: dev-moderation-key
+      - key: DISABLE_FILE_WATCHERS
+        value: "true"
+      - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+        value: "false"
+    disk:
+      name: linguatalk-sqlite
+      mountPath: /data
+      sizeGB: 1

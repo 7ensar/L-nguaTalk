@@ -57,15 +57,17 @@ public static class DependencyInjection
         services.Configure<SignalingOptions>(configuration.GetSection(SignalingOptions.SectionName));
 
         var signalingUrl = configuration[$"{SignalingOptions.SectionName}:PublicUrl"] ?? "http://localhost:5050";
+        // Render free tier cold-start için daha toleranslı timeout
+        var signalingTimeoutSec = configuration.GetValue("Signaling:HttpTimeoutSeconds", 15);
         services.AddHttpClient<ISignalingStatsClient, SignalingStatsClient>(client =>
         {
             client.BaseAddress = new Uri(signalingUrl.TrimEnd('/') + "/");
-            client.Timeout = TimeSpan.FromSeconds(3);
+            client.Timeout = TimeSpan.FromSeconds(signalingTimeoutSec);
         });
         services.AddHttpClient("SignalingModeration", client =>
         {
             client.BaseAddress = new Uri(signalingUrl.TrimEnd('/') + "/");
-            client.Timeout = TimeSpan.FromSeconds(4);
+            client.Timeout = TimeSpan.FromSeconds(Math.Max(signalingTimeoutSec, 8));
         });
 
         services.AddScoped<IMatchHistoryRepository, MatchHistoryRepository>();
