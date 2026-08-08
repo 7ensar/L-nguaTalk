@@ -1,0 +1,9 @@
+{
+  "Database": {
+    "Provider": "PostgreSQL"
+  },
+  "ConnectionStrings": {
+    "PostgreSQL": "Host=db.oliyycdgzxmjjvjridkp.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=YOUR_PASSWORD;SSL Mode=Require;Trust Server Certificate=true",
+    "DefaultConnection": "Host=db.oliyycdgzxmjjvjridkp.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=YOUR_PASSWORD;SSL Mode=Require;Trust Server Certificate=true"
+  }
+}

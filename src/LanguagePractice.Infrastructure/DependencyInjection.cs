@@ -26,8 +26,11 @@ public static class DependencyInjection
         {
             if (provider == DatabaseProvider.SqlServer)
             {
-                // İleride MSSQL'e geçiş: appsettings'te Database:Provider = "SqlServer"
                 options.UseSqlServer(connectionString);
+            }
+            else if (provider == DatabaseProvider.PostgreSQL)
+            {
+                options.UseNpgsql(connectionString);
             }
             else
             {
@@ -85,7 +88,12 @@ public static class DependencyInjection
         IHostEnvironment? environment)
     {
         // Önce provider'a özel connection string, yoksa DefaultConnection
-        var namedKey = provider == DatabaseProvider.SqlServer ? "SqlServer" : "Sqlite";
+        var namedKey = provider switch
+        {
+            DatabaseProvider.SqlServer => "SqlServer",
+            DatabaseProvider.PostgreSQL => "PostgreSQL",
+            _ => "Sqlite"
+        };
         var connectionString =
             configuration.GetConnectionString(namedKey)
             ?? configuration.GetConnectionString("DefaultConnection")

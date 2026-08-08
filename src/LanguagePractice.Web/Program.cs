@@ -18,6 +18,12 @@ var builder = WebApplication.CreateBuilder(args);
 // CreateBuilder'ın eklediği appsettings kaynaklarında reloadOnChange=false
 DisableConfigurationReloadOnChange(builder);
 
+// Gitignore'lı local secrets (ör. Supabase connection string)
+builder.Configuration.AddJsonFile(
+    $"appsettings.{builder.Environment.EnvironmentName}.local.json",
+    optional: true,
+    reloadOnChange: false);
+
 builder.Services.Configure<SignalingOptions>(
     builder.Configuration.GetSection(SignalingOptions.SectionName));
 builder.Services.Configure<ModerationOptions>(
