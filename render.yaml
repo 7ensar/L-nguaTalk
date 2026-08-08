@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: linguatalk-signaling
+    runtime: node
+    rootDir: src/signaling-service
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
