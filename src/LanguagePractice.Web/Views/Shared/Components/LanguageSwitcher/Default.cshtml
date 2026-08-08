@@ -2,34 +2,36 @@
 @using LanguagePractice.Web.Localization
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
 
-<div class="dropdown language-switcher">
-    <button class="glass-btn dropdown-toggle"
+<div class="language-switcher" data-lang-switcher>
+    <button class="glass-btn language-switcher-btn"
             type="button"
             id="languageSwitcherBtn"
-            data-bs-toggle="dropdown"
-            data-bs-auto-close="true"
             aria-expanded="false"
+            aria-controls="languageMenuPanel"
             aria-haspopup="true"
             aria-label="@Localizer["Lang_Change"]">
         <span class="lang-code text-uppercase">@Model.CurrentCode.Split('-')[0]</span>
         <span class="d-none d-md-inline text-truncate lang-native">@Model.Current.NativeName</span>
+        <span class="language-caret" aria-hidden="true"></span>
     </button>
-    <ul class="dropdown-menu dropdown-menu-end language-menu" aria-labelledby="languageSwitcherBtn">
-        <li class="language-menu-label px-3 py-2">@Localizer["Lang_Label"]</li>
-        @foreach (var culture in Model.Cultures)
-        {
-            <li>
-                <form asp-controller="Culture" asp-action="Set" method="post" class="m-0">
+
+    <div class="language-menu" id="languageMenuPanel" role="menu" hidden>
+        <div class="language-menu-label">@Localizer["Lang_Label"]</div>
+        <div class="language-menu-list">
+            @foreach (var culture in Model.Cultures)
+            {
+                <form asp-controller="Culture" asp-action="Set" method="post" class="m-0" role="none">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="culture" value="@culture.Code" />
                     <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
                     <button type="submit"
-                            class="dropdown-item language-item @(culture.Code == Model.CurrentCode ? "active" : null)">
+                            role="menuitem"
+                            class="language-item @(culture.Code == Model.CurrentCode ? "active" : null)">
                         <span class="fw-semibold">@culture.NativeName</span>
                         <span class="small d-block">@culture.EnglishName</span>
                     </button>
                 </form>
-            </li>
-        }
-    </ul>
+            }
+        </div>
+    </div>
 </div>
