@@ -20,7 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Resources\i18n\**\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Update (Include değil): varsayılan Content ile çakışıp NETSDK1022 üretmesin -->
+    <Content Update="Resources\i18n\**\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -1,20 +1,23 @@
-**/.git
-**/.gitignore
-**/.DS_Store
-**/.vs
-**/.vscode
-**/.idea
-**/.dotnet-cli
+.git
+.gitignore
+.DS_Store
+.vs
+.vscode
+.idea
+.dotnet-cli
+.cursor
 
-**/bin
-**/obj
+**/bin/
+**/obj/
 **/*.user
 **/*.suo
 
-**/node_modules
-**/npm-debug.log*
-**/.env
-**/.env.*
+# Node signaling — ayrı servis; Docker context'i şişirmesin
+src/signaling-service/
+**/node_modules/
+npm-debug.log*
+.env
+.env.*
 
 **/App_Data/*.db
 **/App_Data/*.db-*
@@ -23,9 +26,8 @@
 **/*.db-wal
 **/*.log
 
-**/wwwroot/uploads/avatars/*
-!**/wwwroot/uploads/avatars/.gitkeep
+src/LanguagePractice.Web/wwwroot/uploads/avatars/*
+!src/LanguagePractice.Web/wwwroot/uploads/avatars/.gitkeep
 
 README.md
-**/agent-transcripts
-**/.cursor
+**/Properties/launchSettings.json
