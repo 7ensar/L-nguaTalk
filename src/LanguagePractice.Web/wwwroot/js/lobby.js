@@ -13,6 +13,7 @@
   const leaveBtn = document.getElementById("leaveQueueBtn");
   const nextBtn = document.getElementById("nextBtn");
   const reportBtn = document.getElementById("reportBtn");
+  const backToLobbyBtn = document.getElementById("backToLobbyBtn");
   const reportForm = document.getElementById("reportForm");
   const reportModalEl = document.getElementById("reportModal");
   const localVideo = document.getElementById("localVideo");
@@ -101,6 +102,7 @@
     if (leaveBtn) leaveBtn.disabled = !(queued || matched);
     if (nextBtn) nextBtn.disabled = busy;
     if (reportBtn) reportBtn.disabled = !matched;
+    if (backToLobbyBtn) backToLobbyBtn.hidden = !(queued || matched);
     setChatEnabled(!!matched);
   }
 
@@ -571,6 +573,13 @@
 
   leaveBtn?.addEventListener("click", () => {
     leaveQueueAndCall();
+  });
+
+  backToLobbyBtn?.addEventListener("click", () => {
+    leaveQueueAndCall();
+    setStatus(t.ready || "Ready.");
+    toast.info(t.toastBackToLobby || t.toastLeft || "Back to lobby.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   reportBtn?.addEventListener("click", () => {

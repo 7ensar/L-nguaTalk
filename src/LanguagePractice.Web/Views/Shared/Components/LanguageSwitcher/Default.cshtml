@@ -7,28 +7,29 @@
             type="button"
             id="languageSwitcherBtn"
             data-bs-toggle="dropdown"
-            data-bs-display="static"
+            data-bs-auto-close="true"
             aria-expanded="false"
+            aria-haspopup="true"
             aria-label="@Localizer["Lang_Change"]">
         <span class="lang-code text-uppercase">@Model.CurrentCode.Split('-')[0]</span>
-        <span class="d-none d-md-inline text-truncate" style="max-width: 6.5rem; font-weight: 500; opacity: .85;">@Model.Current.NativeName</span>
+        <span class="d-none d-md-inline text-truncate lang-native">@Model.Current.NativeName</span>
     </button>
-    <div class="dropdown-menu dropdown-menu-end language-menu p-2" aria-labelledby="languageSwitcherBtn">
-        <div class="small px-2 pb-2" style="color: var(--text-muted);">@Localizer["Lang_Label"]</div>
-        <div class="language-grid">
-            @foreach (var culture in Model.Cultures)
-            {
+    <ul class="dropdown-menu dropdown-menu-end language-menu" aria-labelledby="languageSwitcherBtn">
+        <li class="language-menu-label px-3 py-2">@Localizer["Lang_Label"]</li>
+        @foreach (var culture in Model.Cultures)
+        {
+            <li>
                 <form asp-controller="Culture" asp-action="Set" method="post" class="m-0">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="culture" value="@culture.Code" />
                     <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
                     <button type="submit"
-                            class="dropdown-item language-item @(culture.Code == Model.CurrentCode ? "active" : "")">
+                            class="dropdown-item language-item @(culture.Code == Model.CurrentCode ? "active" : null)">
                         <span class="fw-semibold">@culture.NativeName</span>
                         <span class="small d-block">@culture.EnglishName</span>
                     </button>
                 </form>
-            }
-        </div>
-    </div>
+            </li>
+        }
+    </ul>
 </div>

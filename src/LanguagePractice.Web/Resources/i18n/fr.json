@@ -143,5 +143,7 @@
   "Lobby_ChatPlaceholder": "Type a message…",
   "Lobby_ChatSend": "Send",
   "Profile_InterestsHint": "Pick from tags managed by admins.",
-  "Profile_NoTagsAvailable": "No interest tags available yet."
+  "Profile_NoTagsAvailable": "No interest tags available yet.",
+  "Lobby_BackToLobby": "Back to lobby",
+  "Lobby_BackToLobbyToast": "Returned to lobby."
 }

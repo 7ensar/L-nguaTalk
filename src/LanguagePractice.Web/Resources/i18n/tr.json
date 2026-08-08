@@ -143,5 +143,7 @@
   "Lobby_ChatPlaceholder": "Mesaj yaz…",
   "Lobby_ChatSend": "Gönder",
   "Profile_InterestsHint": "Admin tarafından yönetilen etiketlerden seç.",
-  "Profile_NoTagsAvailable": "Henüz seçilebilir etiket yok."
+  "Profile_NoTagsAvailable": "Henüz seçilebilir etiket yok.",
+  "Lobby_BackToLobby": "Lobiye dön",
+  "Lobby_BackToLobbyToast": "Lobiye dönüldü."
 }

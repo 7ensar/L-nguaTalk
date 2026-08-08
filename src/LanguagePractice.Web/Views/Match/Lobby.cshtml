@@ -14,7 +14,7 @@
 
 <div class="lobby-page">
     <div class="lobby-top">
-        <div>
+        <div class="lobby-top-main">
             <div class="fw-semibold" style="letter-spacing:-0.02em;">@Localizer["Lobby_Title"]</div>
             <div class="small text-muted">
                 @Localizer["Lobby_Hello"] <strong style="color:var(--text)">@displayName</strong>
@@ -22,7 +22,12 @@
                 <span class="ms-1">· @languageCode.ToUpperInvariant()</span>
             </div>
         </div>
-        <div id="statusText" class="lobby-status">@Localizer["Lobby_Ready"]</div>
+        <div class="lobby-top-actions">
+            <div id="statusText" class="lobby-status">@Localizer["Lobby_Ready"]</div>
+            <button id="backToLobbyBtn" class="btn btn-soft btn-back-lobby" type="button" hidden>
+                @Localizer["Lobby_BackToLobby"]
+            </button>
+        </div>
     </div>
 
     <div class="lobby-layout">
@@ -64,16 +69,16 @@
     </div>
 </div>
 
-<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background:#151d2f;color:#f3f6ff;border:1px solid rgba(255,255,255,.1);border-radius:1rem;">
-            <form id="reportForm">
-                <div class="modal-header border-secondary-subtle">
+<div class="modal fade report-modal" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable report-modal-dialog">
+        <div class="modal-content report-modal-content">
+            <form id="reportForm" class="report-modal-form">
+                <div class="modal-header report-modal-header">
                     <h2 class="modal-title fs-5" id="reportModalLabel">@Localizer["Report_Title"]</h2>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="@Localizer["Common_Close"]"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="text-muted small">@Localizer["Report_Lead"]</p>
+                <div class="modal-body report-modal-body">
+                    <p class="text-muted small mb-3">@Localizer["Report_Lead"]</p>
                     <label class="form-label" for="reasonCode">@Localizer["Report_Reason"]</label>
                     <select class="form-select mb-3" id="reasonCode" name="reasonCode" required>
                         <option value="inappropriate">@Localizer["Report_Reason_Inappropriate"]</option>
@@ -85,7 +90,7 @@
                     <label class="form-label" for="reportDetails">@Localizer["Report_Details"]</label>
                     <textarea class="form-control" id="reportDetails" name="details" rows="3" maxlength="2000" placeholder="@Localizer["Report_DetailsPlaceholder"]"></textarea>
                 </div>
-                <div class="modal-footer border-secondary-subtle">
+                <div class="modal-footer report-modal-footer">
                     <button type="button" class="btn btn-soft" data-bs-dismiss="modal">@Localizer["Common_Close"]</button>
                     <button type="submit" class="btn btn-danger">@Localizer["Report_Submit"]</button>
                 </div>
@@ -138,7 +143,8 @@
                 toastReportRate: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportRate"].Value)),
                 toastReportEnded: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportEnded"].Value)),
                 toastCallEndedModeration: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_CallEndedModeration"].Value)),
-                toastYouBanned: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_YouBanned"].Value))
+                toastYouBanned: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_YouBanned"].Value)),
+                toastBackToLobby: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_BackToLobbyToast"].Value))
             }
         };
     </script>
