@@ -61,10 +61,22 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="DisplayName" class="form-label text-muted">@Localizer["Profile_DisplayName"]</label>
-                    <input asp-for="DisplayName" class="form-control" maxlength="64" />
-                    <span asp-validation-for="DisplayName" class="text-danger"></span>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-7">
+                        <label asp-for="DisplayName" class="form-label text-muted">@Localizer["Profile_DisplayName"]</label>
+                        <input asp-for="DisplayName" class="form-control" maxlength="64" />
+                        <span asp-validation-for="DisplayName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="Gender" class="form-label text-muted">@Localizer["Profile_Gender"]</label>
+                        <select asp-for="Gender" class="form-select">
+                            <option value="">@Localizer["Profile_Gender_Unset"]</option>
+                            <option value="@Gender.Female">@Localizer["Profile_Gender_Female"]</option>
+                            <option value="@Gender.Male">@Localizer["Profile_Gender_Male"]</option>
+                            <option value="@Gender.Other">@Localizer["Profile_Gender_Other"]</option>
+                            <option value="@Gender.PreferNotToSay">@Localizer["Profile_Gender_PreferNot"]</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="mb-3">

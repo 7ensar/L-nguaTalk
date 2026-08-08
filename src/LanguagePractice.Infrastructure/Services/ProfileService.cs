@@ -37,6 +37,7 @@ public sealed class ProfileUpdateInput
     public string? NativeLanguageCode { get; set; }
     public string? TargetLanguageCode { get; set; }
     public LanguageLevel? LanguageLevel { get; set; }
+    public Gender? Gender { get; set; }
     public IReadOnlyList<string> Interests { get; set; } = Array.Empty<string>();
     public bool IsDiscoverable { get; set; } = true;
 }
@@ -174,6 +175,7 @@ public sealed class ProfileService : IProfileService
         profile.NativeLanguageCode = NormalizeLang(input.NativeLanguageCode);
         profile.TargetLanguageCode = NormalizeLang(input.TargetLanguageCode);
         profile.LanguageLevel = input.LanguageLevel;
+        profile.Gender = input.Gender;
         profile.Interests = SerializeInterests(input.Interests);
         profile.IsDiscoverable = input.IsDiscoverable;
         profile.UpdatedAtUtc = DateTime.UtcNow;

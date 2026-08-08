@@ -90,6 +90,7 @@ public class ProfileController : Controller
             TargetLanguageCode = profile?.TargetLanguageCode,
             TargetLanguageName = ResolveLangName(langs, profile?.TargetLanguageCode),
             LanguageLevel = profile?.LanguageLevel,
+            Gender = profile?.Gender,
             Interests = ParseInterests(profile?.Interests),
             IsOwnProfile = isOwn,
             MemberSinceUtc = user.CreatedAtUtc,
@@ -130,6 +131,7 @@ public class ProfileController : Controller
             NativeLanguageCode = profile.NativeLanguageCode,
             TargetLanguageCode = profile.TargetLanguageCode,
             LanguageLevel = profile.LanguageLevel,
+            Gender = profile.Gender,
             InterestsRaw = profile.Interests,
             IsDiscoverable = profile.IsDiscoverable,
             CurrentAvatarUrl = profile.AvatarUrl,
@@ -186,6 +188,7 @@ public class ProfileController : Controller
                 NativeLanguageCode = model.NativeLanguageCode,
                 TargetLanguageCode = model.TargetLanguageCode,
                 LanguageLevel = model.LanguageLevel,
+                Gender = model.Gender,
                 Interests = selected,
                 IsDiscoverable = model.IsDiscoverable
             }, cancellationToken);

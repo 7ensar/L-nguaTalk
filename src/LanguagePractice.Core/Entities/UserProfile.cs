@@ -15,6 +15,7 @@ public class UserProfile
     public string? NativeLanguageCode { get; set; }
     public string? TargetLanguageCode { get; set; }
     public LanguageLevel? LanguageLevel { get; set; }
+    public Gender? Gender { get; set; }
 
     /// <summary>
     /// Virgülle ayrılmış ilgi alanı etiketleri (ör. music,travel,movies).

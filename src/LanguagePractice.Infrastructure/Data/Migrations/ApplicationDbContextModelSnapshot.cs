@@ -680,6 +680,10 @@ namespace LanguagePractice.Infrastructure.Data.Migrations
                         .HasMaxLength(2)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Gender")
+                        .HasMaxLength(24)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Interests")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");

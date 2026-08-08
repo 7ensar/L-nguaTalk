@@ -16,6 +16,7 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(x => x.NativeLanguageCode).HasMaxLength(10);
         builder.Property(x => x.TargetLanguageCode).HasMaxLength(10);
         builder.Property(x => x.LanguageLevel).HasConversion<string>().HasMaxLength(8);
+        builder.Property(x => x.Gender).HasConversion<string>().HasMaxLength(24);
         builder.Property(x => x.Interests).HasMaxLength(500);
 
         builder.HasOne(x => x.User)

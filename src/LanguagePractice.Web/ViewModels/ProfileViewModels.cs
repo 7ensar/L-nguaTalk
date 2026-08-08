@@ -17,6 +17,7 @@ public sealed class ProfileDetailsViewModel
     public string? TargetLanguageCode { get; set; }
     public string? TargetLanguageName { get; set; }
     public LanguageLevel? LanguageLevel { get; set; }
+    public Gender? Gender { get; set; }
     public IReadOnlyList<string> Interests { get; set; } = Array.Empty<string>();
     public bool IsOwnProfile { get; set; }
     public DateTime MemberSinceUtc { get; set; }
@@ -47,6 +48,8 @@ public sealed class ProfileEditViewModel
     public string? TargetLanguageCode { get; set; }
 
     public LanguageLevel? LanguageLevel { get; set; }
+
+    public Gender? Gender { get; set; }
 
     /// <summary>Virgülle ayrılmış ilgi alanları.</summary>
     [StringLength(500)]

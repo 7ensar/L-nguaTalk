@@ -1,4 +1,5 @@
 @model LanguagePractice.Web.ViewModels.ProfileDetailsViewModel
+@using LanguagePractice.Core.Enums
 @using LanguagePractice.Web.Helpers
 @using LanguagePractice.Web.Localization
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
@@ -69,6 +70,25 @@
                                     <strong>CEFR</strong>
                                 </span>
                             </span>
+                        }
+                        @if (Model.Gender is { } gender && gender != Gender.PreferNotToSay)
+                        {
+                            var genderLabel = gender switch
+                            {
+                                Gender.Female => Localizer["Profile_Gender_Female"].Value,
+                                Gender.Male => Localizer["Profile_Gender_Male"].Value,
+                                Gender.Other => Localizer["Profile_Gender_Other"].Value,
+                                _ => null
+                            };
+                            if (genderLabel is not null)
+                            {
+                                <span class="lang-badge">
+                                    <span>
+                                        <small>@Localizer["Profile_Gender"]</small>
+                                        <strong>@genderLabel</strong>
+                                    </span>
+                                </span>
+                            }
                         }
                     </div>
                 </div>
