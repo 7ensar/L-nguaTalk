@@ -56,7 +56,8 @@ a:hover { color: #9ec3ff; }
 main {
   flex: 1;
   max-width: 100%;
-  overflow-x: clip;
+  /* overflow-x:clip Bootstrap .row negatif margin'lerini kesip formları kaydırıyordu */
+  overflow-x: visible;
 }
 
 .site-shell {
@@ -508,17 +509,17 @@ main {
   font-weight: 500;
 }
 
-.form-control,
-.form-select,
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]),
-textarea,
-select {
-  /* iOS/Safari: <16px focus'ta viewport zoom yapar */
-  font-size: 16px;
+.form-label {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.45rem;
 }
 
 .form-control,
 .form-select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   background-color: #101726;
   background-image: none;
   border: 1px solid var(--glass-border);
@@ -528,7 +529,15 @@ select {
   -webkit-appearance: none;
   appearance: none;
   color-scheme: dark;
+  /* iOS/Safari: <16px focus'ta viewport zoom yapar */
   font-size: 16px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+textarea.form-control {
+  min-height: 6.5rem;
+  resize: vertical;
 }
 
 .form-select {
@@ -664,14 +673,30 @@ select {
 /* Auth */
 .auth-stage {
   min-height: calc(100vh - var(--header-h) - 90px);
-  display: grid;
-  place-items: center;
-  padding: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 2rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .auth-card {
-  width: min(100%, 440px);
+  width: 100%;
+  max-width: 440px;
   padding: clamp(1.35rem, 3vw, 2rem);
+  box-sizing: border-box;
+}
+
+.auth-card-wide {
+  max-width: 560px;
+}
+
+.field-error,
+.auth-card .text-danger,
+.profile-edit-card .text-danger {
+  display: block;
+  margin-top: 0.35rem;
 }
 
 .auth-card h1 {
@@ -680,12 +705,79 @@ select {
   margin-bottom: 1rem;
 }
 
+.auth-card form,
+.profile-edit-card form,
+.glass-card form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+}
+
+.auth-card form > .mb-3,
+.auth-card form > .mb-4,
+.auth-card form > .form-check,
+.profile-edit-card form > .mb-3,
+.profile-edit-card form > .mb-4,
+.profile-edit-card form > .form-check,
+.profile-edit-card form > fieldset,
+.glass-card form > .mb-3 {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 1.5rem;
+  padding-left: 0 !important;
+  margin-bottom: 1rem;
+}
+
+.form-check .form-check-input {
+  float: none;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.form-check .form-check-label {
+  margin: 0;
+  color: var(--text-muted);
+}
+
 .form-check-input {
   background-color: rgba(255, 255, 255, 0.08);
   border-color: var(--glass-border);
 }
 
 .form-check-label { color: var(--text-muted); }
+
+/* Bootstrap .row negatif margin taşmasını kart içinde kes */
+.glass-card .row,
+.auth-card .row,
+.profile-edit-card .row {
+  --bs-gutter-x: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  max-width: 100%;
+}
+
+.glass-card .row > [class*="col"],
+.auth-card .row > [class*="col"],
+.profile-edit-card .row > [class*="col"] {
+  padding-left: calc(var(--bs-gutter-x) * 0.5);
+  padding-right: calc(var(--bs-gutter-x) * 0.5);
+}
+
+@media (max-width: 767.98px) {
+  .glass-card .row > [class*="col-md"],
+  .profile-edit-card .row > [class*="col-md"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
 
 .btn-primary {
   --bs-btn-bg: #3b82f6;

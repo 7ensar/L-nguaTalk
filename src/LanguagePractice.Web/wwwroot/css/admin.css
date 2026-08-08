@@ -147,15 +147,34 @@
   white-space: nowrap;
 }
 
+.admin-body .form-label {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.45rem;
+}
+
 .admin-body .form-control,
-.admin-body .form-select,
-.admin-body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
-.admin-body textarea,
-.admin-body select {
+.admin-body .form-select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   background-color: #101726;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #f3f6ff;
-  font-size: 16px; /* iOS focus zoom önleme */
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.admin-body form .mb-3,
+.admin-body form .mb-2 {
+  width: 100%;
+}
+
+.admin-body .row {
+  --bs-gutter-x: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  max-width: 100%;
 }
 
 .admin-body .btn-outline-secondary,
