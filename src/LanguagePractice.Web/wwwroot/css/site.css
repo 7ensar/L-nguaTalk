@@ -26,11 +26,18 @@ html {
   font-size: 16px;
   min-height: 100%;
   color-scheme: dark;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  /* Dikey kaydır; yatay “kayma”yı engelle */
+  touch-action: pan-y;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   color: var(--text);
   color-scheme: dark;
@@ -46,7 +53,11 @@ body {
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: #9ec3ff; }
 
-main { flex: 1; }
+main {
+  flex: 1;
+  max-width: 100%;
+  overflow-x: clip;
+}
 
 .site-shell {
   width: min(1120px, calc(100% - 1.5rem));
@@ -990,7 +1001,7 @@ html[dir="rtl"] .dropdown-menu-end {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  width: min(360px, calc(100vw - 1.5rem));
+  width: min(360px, calc(100% - 1.5rem));
   pointer-events: none;
 }
 
@@ -1403,7 +1414,7 @@ html[dir="rtl"] .lt-toast-root {
 /* Report modal — mobile first */
 .report-modal-dialog {
   margin: 0.75rem;
-  max-width: min(520px, calc(100vw - 1.5rem));
+  max-width: min(520px, calc(100% - 1.5rem));
 }
 
 .report-modal-content {
