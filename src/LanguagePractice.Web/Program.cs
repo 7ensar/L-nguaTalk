@@ -6,8 +6,17 @@ using LanguagePractice.Infrastructure.Services;
 using LanguagePractice.Web.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
+// Docker / Render / Linux: FileSystemWatcher (inotify) kotası aşılınca
+// StartRaisingEvents IOException ile process düşebiliyor.
+// CreateBuilder'dan ÖNCE config hot-reload kapatılmalı.
+DisableFileWatchersInConstrainedEnvironments();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// CreateBuilder'ın eklediği appsettings kaynaklarında reloadOnChange=false
+DisableConfigurationReloadOnChange(builder);
 
 builder.Services.Configure<SignalingOptions>(
     builder.Configuration.GetSection(SignalingOptions.SectionName));
@@ -76,3 +85,48 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+static void DisableFileWatchersInConstrainedEnvironments()
+{
+    var aspEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+    var forceDisable = IsTruthy(Environment.GetEnvironmentVariable("DISABLE_FILE_WATCHERS"));
+
+    var inContainer =
+        File.Exists("/.dockerenv")
+        || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("RENDER"))
+        || Directory.Exists("/var/run/secrets/kubernetes.io");
+
+    var isDevelopment = string.Equals(aspEnv, "Development", StringComparison.OrdinalIgnoreCase);
+
+    if (forceDisable || inContainer || !isDevelopment)
+    {
+        // Host / WebApplication.CreateBuilder appsettings reload
+        Environment.SetEnvironmentVariable("DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE", "false");
+        // Alternatif anahtar (bazı host sürümleri)
+        Environment.SetEnvironmentVariable("HostBuilder__ReloadConfigOnChange", "false");
+        // inotify yerine polling (kalan watcher'lar için)
+        Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "true");
+    }
+}
+
+static void DisableConfigurationReloadOnChange(WebApplicationBuilder builder)
+{
+    if (builder.Environment.IsDevelopment()
+        && !IsTruthy(Environment.GetEnvironmentVariable("DISABLE_FILE_WATCHERS")))
+    {
+        return;
+    }
+
+    foreach (var source in builder.Configuration.Sources)
+    {
+        if (source is FileConfigurationSource fileSource)
+        {
+            fileSource.ReloadOnChange = false;
+        }
+    }
+}
+
+static bool IsTruthy(string? value)
+    => string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+       || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+       || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);

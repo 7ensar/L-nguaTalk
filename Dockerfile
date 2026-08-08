@@ -48,7 +48,11 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
     ConnectionStrings__Sqlite="Data Source=/data/linguatalk.db" \
     ConnectionStrings__DefaultConnection="Data Source=/data/linguatalk.db" \
     DOTNET_EnableDiagnostics=0 \
-    DOTNET_NOLOGO=1
+    DOTNET_NOLOGO=1 \
+    DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false \
+    HostBuilder__ReloadConfigOnChange=false \
+    DOTNET_USE_POLLING_FILE_WATCHER=true \
+    DISABLE_FILE_WATCHERS=true
 
 EXPOSE 8080
 
