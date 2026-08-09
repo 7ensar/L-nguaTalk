@@ -32,35 +32,31 @@
 
                 @if (isAuth)
                 {
-                    <div class="dropdown">
-                        <button class="glass-btn profile-toggle dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="profile-switcher" data-profile-switcher>
+                        <button class="glass-btn profile-toggle"
+                                type="button"
+                                id="profileSwitcherBtn"
+                                aria-expanded="false"
+                                aria-controls="profileMenuPanel"
+                                aria-haspopup="true"
+                                aria-label="@Localizer["Nav_Profile"]">
                             <span class="profile-avatar">@initial</span>
-                            <span class="d-none d-sm-inline text-truncate" style="max-width: 120px;">@display</span>
+                            <span class="d-none d-sm-inline text-truncate profile-name">@display</span>
+                            <span class="language-caret" aria-hidden="true"></span>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end profile-menu">
-                            <li>
-                                <a class="dropdown-item" asp-area="" asp-controller="Profile" asp-action="Index">@Localizer["Nav_Profile"]</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" asp-area="" asp-controller="Profile" asp-action="Edit">@Localizer["Nav_EditProfile"]</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" asp-area="" asp-controller="Match" asp-action="Lobby">@Localizer["Nav_Lobby"]</a>
-                            </li>
+                        <div class="profile-menu" id="profileMenuPanel" role="menu" hidden>
+                            <a class="profile-menu-item" role="menuitem" asp-area="" asp-controller="Profile" asp-action="Index">@Localizer["Nav_Profile"]</a>
+                            <a class="profile-menu-item" role="menuitem" asp-area="" asp-controller="Profile" asp-action="Edit">@Localizer["Nav_EditProfile"]</a>
+                            <a class="profile-menu-item" role="menuitem" asp-area="" asp-controller="Match" asp-action="Lobby">@Localizer["Nav_Lobby"]</a>
                             @if (User.IsInRole(AppRoles.Admin))
                             {
-                                <li>
-                                    <a class="dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@Localizer["Nav_Admin"]</a>
-                                </li>
+                                <a class="profile-menu-item" role="menuitem" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@Localizer["Nav_Admin"]</a>
                             }
-                            <li><hr class="dropdown-divider opacity-25" /></li>
-                            <li>
-                                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-                                    <button type="submit" class="dropdown-item">@Localizer["Nav_Logout"]</button>
-                                </form>
-                            </li>
-                        </ul>
+                            <div class="profile-menu-divider" role="separator"></div>
+                            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                <button type="submit" class="profile-menu-item profile-menu-logout" role="menuitem">@Localizer["Nav_Logout"]</button>
+                            </form>
+                        </div>
                     </div>
                 }
                 else

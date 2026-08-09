@@ -1,61 +1,82 @@
 ﻿(() => {
-  function closeSwitcher(root) {
-    const btn = root.querySelector(".language-switcher-btn");
-    const menu = root.querySelector(".language-menu");
+  function closePanel(root, btnSel, menuSel) {
+    const btn = root.querySelector(btnSel);
+    const menu = root.querySelector(menuSel);
     if (!menu || !btn) return;
     menu.hidden = true;
     btn.setAttribute("aria-expanded", "false");
     root.classList.remove("is-open");
   }
 
-  function openSwitcher(root) {
-    const btn = root.querySelector(".language-switcher-btn");
-    const menu = root.querySelector(".language-menu");
+  function openPanel(root, btnSel, menuSel) {
+    const btn = root.querySelector(btnSel);
+    const menu = root.querySelector(menuSel);
     if (!menu || !btn) return;
     menu.hidden = false;
     btn.setAttribute("aria-expanded", "true");
     root.classList.add("is-open");
   }
 
-  function initLanguageSwitcher() {
-    const root = document.querySelector("[data-lang-switcher]");
-    if (!root) return;
+  function initToggleMenu(rootSel, btnSel, menuSel) {
+    const root = document.querySelector(rootSel);
+    if (!root) return null;
 
-    const btn = root.querySelector(".language-switcher-btn");
-    const menu = root.querySelector(".language-menu");
-    if (!btn || !menu) return;
+    const btn = root.querySelector(btnSel);
+    const menu = root.querySelector(menuSel);
+    if (!btn || !menu) return null;
 
-    // Başlangıçta kapalı
+    // Başlangıçta her zaman kapalı
     menu.hidden = true;
     btn.setAttribute("aria-expanded", "false");
     root.classList.remove("is-open");
 
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (menu.hidden) {
-        openSwitcher(root);
-      } else {
-        closeSwitcher(root);
+    return { root, btn, menu, btnSel, menuSel };
+  }
+
+  function initHeaderMenus() {
+    const lang = initToggleMenu("[data-lang-switcher]", ".language-switcher-btn", ".language-menu");
+    const profile = initToggleMenu("[data-profile-switcher]", ".profile-toggle", ".profile-menu");
+    const menus = [lang, profile].filter(Boolean);
+
+    function closeAll(except) {
+      for (const m of menus) {
+        if (m !== except) {
+          closePanel(m.root, m.btnSel, m.menuSel);
+        }
       }
-    });
+    }
+
+    for (const m of menus) {
+      m.btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (m.menu.hidden) {
+          closeAll(m);
+          openPanel(m.root, m.btnSel, m.menuSel);
+        } else {
+          closePanel(m.root, m.btnSel, m.menuSel);
+        }
+      });
+    }
 
     document.addEventListener("click", (e) => {
-      if (!root.contains(e.target)) {
-        closeSwitcher(root);
+      for (const m of menus) {
+        if (!m.root.contains(e.target)) {
+          closePanel(m.root, m.btnSel, m.menuSel);
+        }
       }
     });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        closeSwitcher(root);
+        closeAll(null);
       }
     });
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initLanguageSwitcher);
+    document.addEventListener("DOMContentLoaded", initHeaderMenus);
   } else {
-    initLanguageSwitcher();
+    initHeaderMenus();
   }
 })();
