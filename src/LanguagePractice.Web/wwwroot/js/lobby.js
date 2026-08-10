@@ -31,6 +31,7 @@
   const chatPeerLabel = document.getElementById("chatPeerLabel");
   const toggleMicBtn = document.getElementById("toggleMicBtn");
   const toggleCamBtn = document.getElementById("toggleCamBtn");
+  const switchCamBtn = document.getElementById("switchCamBtn");
   const topicText = document.getElementById("topicText");
   const nextTopicBtn = document.getElementById("nextTopicBtn");
   const queueHintText = document.getElementById("queueHintText");
@@ -55,6 +56,9 @@
   let resumeJoinAfterMedia = false;
   let micEnabled = true;
   let camEnabled = true;
+  /** @type {"user"|"environment"} */
+  let preferredFacingMode = "user";
+  let switchingCamera = false;
   let matchStartedAt = null;
   let topicIndex = 0;
   const topics = Array.isArray(cfg.topics) ? cfg.topics : [];
@@ -238,6 +242,192 @@
       toggleCamBtn.setAttribute("aria-pressed", camEnabled ? "true" : "false");
       toggleCamBtn.textContent = camEnabled ? "Cam" : "Cam off";
     }
+    if (switchCamBtn) {
+      switchCamBtn.disabled = switchingCamera;
+      switchCamBtn.setAttribute(
+        "aria-label",
+        t.switchCamera || "Switch camera"
+      );
+      switchCamBtn.title = t.switchCamera || "Switch camera";
+    }
+  }
+
+  function syncLocalVideoMirror() {
+    if (!localVideo) return;
+    localVideo.classList.toggle("is-rear", preferredFacingMode === "environment");
+  }
+
+  function buildVideoConstraints(facing, deviceId) {
+    const base = {
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      frameRate: { ideal: 24, max: 30 }
+    };
+    if (deviceId) {
+      return { ...base, deviceId: { exact: deviceId } };
+    }
+    return { ...base, facingMode: { ideal: facing || "user" } };
+  }
+
+  async function resolveFacingDeviceId(facing) {
+    if (!navigator.mediaDevices?.enumerateDevices) return null;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videos = devices.filter((d) => d.kind === "videoinput");
+    if (videos.length < 2) return null;
+
+    const isBack = (label) => /back|rear|environment|arka|world/i.test(label || "");
+    const isFront = (label) => /front|user|face|ön|facing you/i.test(label || "");
+
+    if (facing === "environment") {
+      const back = videos.find((d) => isBack(d.label));
+      if (back?.deviceId) return back.deviceId;
+    } else {
+      const front = videos.find((d) => isFront(d.label));
+      if (front?.deviceId) return front.deviceId;
+    }
+
+    const currentId = localStream?.getVideoTracks()[0]?.getSettings?.()?.deviceId;
+    const idx = Math.max(0, videos.findIndex((d) => d.deviceId === currentId));
+    const next = videos[(idx + 1) % videos.length];
+    return next?.deviceId || null;
+  }
+
+  async function openVideoTrack(facing) {
+    const currentId = localStream?.getVideoTracks()[0]?.getSettings?.()?.deviceId || null;
+
+    async function fromConstraints(video) {
+      const stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+      const track = stream.getVideoTracks()[0];
+      if (!track) {
+        stream.getTracks().forEach((tr) => tr.stop());
+        throw new Error("NO_VIDEO_TRACK");
+      }
+      return { stream, track };
+    }
+
+    const deviceId = await resolveFacingDeviceId(facing);
+    if (deviceId && deviceId !== currentId) {
+      try {
+        return await fromConstraints(buildVideoConstraints(facing, deviceId));
+      } catch (_) {
+        /* fall through to facingMode */
+      }
+    }
+
+    try {
+      const result = await fromConstraints({
+        ...buildVideoConstraints(facing),
+        facingMode: { exact: facing }
+      });
+      return result;
+    } catch (_) {
+      /* soft ideal constraint */
+    }
+
+    const soft = await fromConstraints(buildVideoConstraints(facing));
+    const gotId = soft.track.getSettings?.()?.deviceId;
+    if (currentId && gotId && gotId === currentId) {
+      let videoCount = 0;
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        videoCount = devices.filter((d) => d.kind === "videoinput").length;
+      } catch (_) {
+        videoCount = 0;
+      }
+      if (videoCount < 2) {
+        soft.track.stop();
+        throw new Error("NO_ALT_CAMERA");
+      }
+      const gotFacing = soft.track.getSettings?.()?.facingMode;
+      if (!gotFacing || gotFacing !== facing) {
+        soft.track.stop();
+        throw new Error("SAME_CAMERA");
+      }
+    }
+    return soft;
+  }
+
+  async function applyVideoTrack(newTrack) {
+    newTrack.enabled = camEnabled;
+
+    if (pc) {
+      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+      if (sender) {
+        await sender.replaceTrack(newTrack);
+      }
+    }
+
+    if (localStream) {
+      const oldVideo = localStream.getVideoTracks()[0];
+      if (oldVideo) {
+        localStream.removeTrack(oldVideo);
+        try {
+          oldVideo.onended = null;
+          oldVideo.stop();
+        } catch (_) {
+          /* ignore */
+        }
+      }
+      localStream.addTrack(newTrack);
+    } else {
+      localStream = new MediaStream([newTrack]);
+    }
+
+    if (localVideo) {
+      localVideo.srcObject = localStream;
+      localVideo.muted = true;
+      localVideo.playsInline = true;
+      try {
+        await localVideo.play();
+      } catch (_) {
+        /* autoplay policies */
+      }
+    }
+
+    watchLocalTracks();
+  }
+
+  async function switchCamera() {
+    if (switchingCamera || mediaGateOpen) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.warn(t.toastSwitchCameraFailed || "Could not switch camera on this device.");
+      return;
+    }
+
+    const nextFacing = preferredFacingMode === "user" ? "environment" : "user";
+    switchingCamera = true;
+    syncMediaToggleUi();
+
+    try {
+      if (!hasLiveMedia()) {
+        const previousFacing = preferredFacingMode;
+        preferredFacingMode = nextFacing;
+        try {
+          await ensureMedia({ force: true });
+        } catch (err) {
+          preferredFacingMode = previousFacing;
+          throw err;
+        }
+        return;
+      }
+
+      const { stream, track } = await openVideoTrack(nextFacing);
+      await applyVideoTrack(track);
+      // Drop empty leftover MediaStream reference; track now lives on localStream.
+      stream.getTracks().forEach((tr) => {
+        if (tr !== track) {
+          try { tr.stop(); } catch (_) { /* ignore */ }
+        }
+      });
+      preferredFacingMode = nextFacing;
+      syncLocalVideoMirror();
+    } catch (err) {
+      console.warn("Camera switch failed", err);
+      toast.warn(t.toastSwitchCameraFailed || "Could not switch camera on this device.");
+    } finally {
+      switchingCamera = false;
+      syncMediaToggleUi();
+    }
   }
 
   function openReportModal() {
@@ -346,12 +536,7 @@
     }
 
     localStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "user",
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-        frameRate: { ideal: 24, max: 30 }
-      },
+      video: buildVideoConstraints(preferredFacingMode),
       audio: {
         echoCancellation: true,
         noiseSuppression: true
@@ -364,12 +549,17 @@
       localVideo.srcObject = localStream;
       localVideo.muted = true;
       localVideo.playsInline = true;
+      syncLocalVideoMirror();
       try {
         await localVideo.play();
       } catch (_) {
         /* autoplay policies */
       }
     }
+
+    localStream.getAudioTracks().forEach((tr) => { tr.enabled = micEnabled; });
+    localStream.getVideoTracks().forEach((tr) => { tr.enabled = camEnabled; });
+    syncMediaToggleUi();
 
     return localStream;
   }
@@ -903,6 +1093,10 @@
     camEnabled = !camEnabled;
     localStream?.getVideoTracks().forEach((tr) => { tr.enabled = camEnabled; });
     syncMediaToggleUi();
+  });
+
+  switchCamBtn?.addEventListener("click", () => {
+    void switchCamera();
   });
 
   nextTopicBtn?.addEventListener("click", () => showTopic(topicIndex + 1));

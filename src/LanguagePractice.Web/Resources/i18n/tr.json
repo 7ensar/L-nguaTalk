@@ -168,6 +168,8 @@
   "Lobby_BackToLobbyToast": "Lobiye dönüldü.",
   "Lobby_Mute": "Mikrofonu kapat",
   "Lobby_CameraOff": "Kamerayı kapat",
+  "Lobby_SwitchCamera": "Kamerayı değiştir",
+  "Lobby_SwitchCameraFailed": "Bu cihazda kamera değiştirilemedi.",
   "Lobby_Topic": "Konuşma konusu",
   "Lobby_NextTopic": "Başka konu",
   "Lobby_AddFriend": "Arkadaş ekle",

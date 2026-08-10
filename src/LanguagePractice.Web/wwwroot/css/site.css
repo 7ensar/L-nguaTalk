@@ -1140,6 +1140,11 @@ textarea.form-control {
   -webkit-transform: scaleX(-1);
 }
 
+.video-local.is-rear {
+  transform: none;
+  -webkit-transform: none;
+}
+
 @media (max-width: 575.98px) {
   .video-local {
     width: 28vw;

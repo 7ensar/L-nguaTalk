@@ -168,6 +168,8 @@
   "Lobby_BackToLobbyToast": "Returned to lobby.",
   "Lobby_Mute": "Mute microphone",
   "Lobby_CameraOff": "Turn camera off",
+  "Lobby_SwitchCamera": "Switch camera",
+  "Lobby_SwitchCameraFailed": "Could not switch camera on this device.",
   "Lobby_Topic": "Conversation starter",
   "Lobby_NextTopic": "Another topic",
   "Lobby_AddFriend": "Add friend",

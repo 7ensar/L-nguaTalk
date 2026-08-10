@@ -52,6 +52,7 @@
             <div class="video-media-toggles">
                 <button id="toggleMicBtn" class="btn-media-toggle" type="button" aria-pressed="true" title="@Localizer["Lobby_Mute"]">Mic</button>
                 <button id="toggleCamBtn" class="btn-media-toggle" type="button" aria-pressed="true" title="@Localizer["Lobby_CameraOff"]">Cam</button>
+                <button id="switchCamBtn" class="btn-media-toggle" type="button" title="@Localizer["Lobby_SwitchCamera"]">Flip</button>
             </div>
             <button id="reportFab" class="btn-report-fab" type="button" hidden>
                 @Localizer["Lobby_Report"]
@@ -236,7 +237,9 @@
                 toastFriendSent: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_FriendSent"].Value)),
                 toastBlocked: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Blocked"].Value)),
                 toastRated: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Rated"].Value)),
-                queueEta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_QueueEta"].Value))
+                queueEta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_QueueEta"].Value)),
+                switchCamera: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_SwitchCamera"].Value)),
+                toastSwitchCameraFailed: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_SwitchCameraFailed"].Value))
             }
         };
     </script>
