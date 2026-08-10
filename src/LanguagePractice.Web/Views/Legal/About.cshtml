@@ -1,0 +1,47 @@
+@using System.Globalization
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Legal_About"].Value;
+    var tr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("tr", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="legal-stage">
+    <article class="glass-card legal-card">
+        <partial name="_LegalNav" />
+        @if (tr)
+        {
+            <h1>Hakkımızda</h1>
+            <p class="legal-lead">LinguaTalk, farklı dilleri pratik etmek isteyen insanları canlı görüntülü eşleşme ile buluşturan bir dil pratiği platformudur.</p>
+            <h2>Ne yapıyoruz?</h2>
+            <p>Kullanıcılar pratik etmek istedikleri dili seçer, kuyruğa girer ve uygun bir partner ile eşleşerek sohbet eder. Amaç; sınıf ortamı dışında gerçek konuşma deneyimi sunmaktır.</p>
+            <h2>Kimler için?</h2>
+            <ul>
+                <li>Yeni bir dil öğrenenler</li>
+                <li>Konuşma pratiği yapmak isteyenler</li>
+                <li>Misafir olarak hızlı denemek isteyenler</li>
+                <li>Üye olarak profil ve ilerleme tutmak isteyenler</li>
+            </ul>
+            <h2>Güvenlik yaklaşımımız</h2>
+            <p>Raporlama, moderasyon ve ban araçlarıyla topluluk güvenliğini korumayı hedefleriz. Kamera/mikrofon erişimi yalnızca eşleşme sırasında tarayıcınız üzerinden ve sizin izninizle kullanılır.</p>
+            <p class="legal-updated">Son güncelleme: 10 Ağustos 2026</p>
+        }
+        else
+        {
+            <h1>About us</h1>
+            <p class="legal-lead">LinguaTalk is a language-practice platform that connects people for live video conversations in the language they want to speak.</p>
+            <h2>What we do</h2>
+            <p>Users pick a practice language, join a queue, and get matched with a partner for real conversation practice outside the classroom.</p>
+            <h2>Who it is for</h2>
+            <ul>
+                <li>Language learners</li>
+                <li>People who want speaking practice</li>
+                <li>Guests who want a quick try</li>
+                <li>Members who want a profile and ongoing use</li>
+            </ul>
+            <h2>Our safety approach</h2>
+            <p>We provide reporting, moderation, and ban tools to help keep the community safer. Camera and microphone access is requested only through your browser, with your permission, during matching.</p>
+            <p class="legal-updated">Last updated: 10 August 2026</p>
+        }
+    </article>
+</section>

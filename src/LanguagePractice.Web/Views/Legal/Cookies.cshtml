@@ -1,0 +1,65 @@
+@using System.Globalization
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Legal_Cookies"].Value;
+    var tr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("tr", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="legal-stage">
+    <article class="glass-card legal-card">
+        <partial name="_LegalNav" />
+        @if (tr)
+        {
+            <h1>Çerez Politikası</h1>
+            <p class="legal-lead">LinguaTalk, hizmetin çalışması için gerekli çerezleri ve benzeri teknolojileri kullanır.</p>
+
+            <h2>1. Çerez nedir?</h2>
+            <p>Çerezler, tarayıcınızda saklanan küçük metin dosyalarıdır. Oturum açma, dil tercihi ve misafir kimliği gibi işlevler için kullanılır.</p>
+
+            <h2>2. Kullandığımız çerez türleri</h2>
+            <ul>
+                <li><strong>Zorunlu / oturum:</strong> giriş ve güvenlik için kimlik doğrulama çerezleri.</li>
+                <li><strong>Tercih:</strong> arayüz dili seçiminizi hatırlayan kültür çerezi.</li>
+                <li><strong>Misafir:</strong> üye olmadan pratik için geçici misafir oturum kimliği.</li>
+            </ul>
+
+            <h2>3. Üçüncü taraflar</h2>
+            <p>Hizmeti sunmak için altyapı sağlayıcıları kullanılabilir. Pazarlama amaçlı izleme çerezleri varsayılan olarak kullanmıyoruz. Ek çerezler eklenirse bu sayfa güncellenir.</p>
+
+            <h2>4. Yönetim</h2>
+            <p>Tarayıcı ayarlarından çerezleri silebilir veya engelleyebilirsiniz. Zorunlu çerezleri kapatırsanız giriş, dil tercihi veya misafir oturumu çalışmayabilir.</p>
+
+            <h2>5. Daha fazla bilgi</h2>
+            <p>Kişisel veriler hakkında ayrıntılar için <a asp-controller="Legal" asp-action="Privacy">Gizlilik Politikası</a>’na bakın.</p>
+
+            <p class="legal-updated">Son güncelleme: 10 Ağustos 2026</p>
+        }
+        else
+        {
+            <h1>Cookie Policy</h1>
+            <p class="legal-lead">LinguaTalk uses cookies and similar technologies that are needed for the service to work.</p>
+
+            <h2>1. What are cookies?</h2>
+            <p>Cookies are small text files stored in your browser. We use them for sign-in, language preference, and guest identity.</p>
+
+            <h2>2. Types we use</h2>
+            <ul>
+                <li><strong>Essential / session:</strong> authentication cookies for sign-in and security.</li>
+                <li><strong>Preference:</strong> a culture cookie that remembers your UI language.</li>
+                <li><strong>Guest:</strong> a temporary guest-session identifier for practice without an account.</li>
+            </ul>
+
+            <h2>3. Third parties</h2>
+            <p>Infrastructure providers may be used to run the service. We do not use marketing tracking cookies by default. If that changes, this page will be updated.</p>
+
+            <h2>4. Managing cookies</h2>
+            <p>You can delete or block cookies in your browser settings. Blocking essential cookies may break sign-in, language preference, or guest sessions.</p>
+
+            <h2>5. More information</h2>
+            <p>For details about personal data, see the <a asp-controller="Legal" asp-action="Privacy">Privacy Policy</a>.</p>
+
+            <p class="legal-updated">Last updated: 10 August 2026</p>
+        }
+    </article>
+</section>

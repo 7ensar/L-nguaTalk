@@ -1,0 +1,107 @@
+@using System.Globalization
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Legal_Privacy"].Value;
+    var tr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("tr", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="legal-stage">
+    <article class="glass-card legal-card">
+        <partial name="_LegalNav" />
+        @if (tr)
+        {
+            <h1>Gizlilik Politikası</h1>
+            <p class="legal-lead">Bu politika, LinguaTalk’u kullanırken hangi verileri işlediğimizi ve bunları nasıl koruduğumuzu açıklar.</p>
+
+            <h2>1. Veri sorumlusu</h2>
+            <p>LinguaTalk hizmeti kapsamında kişisel verileriniz, platform işletmecisi tarafından işlenir. İletişim için <a asp-controller="Legal" asp-action="Contact">İletişim</a> sayfasını kullanabilirsiniz.</p>
+
+            <h2>2. Topladığımız veriler</h2>
+            <ul>
+                <li><strong>Hesap verileri:</strong> e-posta, görünen ad, şifre özeti (hash), hesap durumu.</li>
+                <li><strong>Profil verileri:</strong> biyografi, dil tercihleri, seviye, ilgi etiketleri, isteğe bağlı avatar.</li>
+                <li><strong>Misafir oturumu:</strong> geçici görünen ad, oturum kimliği, son görülme zamanı.</li>
+                <li><strong>Kullanım / güvenlik:</strong> raporlar, moderasyon kayıtları, ban gerekçeleri, teknik günlükler.</li>
+                <li><strong>Çerezler:</strong> oturum, dil tercihi ve misafir kimliği için gerekli çerezler.</li>
+                <li><strong>Medya:</strong> kamera/mikrofon akışları eşleşme sırasında tarayıcı üzerinden peer-to-peer ile iletilir; kalıcı olarak sunucuya kaydetmiyoruz.</li>
+            </ul>
+
+            <h2>3. İşleme amaçları</h2>
+            <ul>
+                <li>Hesap oluşturma ve giriş</li>
+                <li>Eşleştirme ve canlı sohbet deneyimi</li>
+                <li>Güvenlik, kötüye kullanım önleme ve moderasyon</li>
+                <li>Hizmet iyileştirme ve hata ayıklama</li>
+                <li>Yasal yükümlülüklerin yerine getirilmesi</li>
+            </ul>
+
+            <h2>4. Hukuki sebepler</h2>
+            <p>Veriler; sözleşmenin ifası, meşru menfaat (güvenlik ve hizmet sürekliliği), açık rıza (ör. medya izinleri) ve gerektiğinde yasal zorunluluk kapsamında işlenir.</p>
+
+            <h2>5. Paylaşım</h2>
+            <p>Verilerinizi satmayız. Altyapı sağlayıcıları (ör. barındırma, veritabanı) yalnızca hizmeti çalıştırmak için gerekli ölçüde erişebilir. Yasal zorunluluk halinde yetkili mercilerle paylaşım yapılabilir.</p>
+
+            <h2>6. Saklama süresi</h2>
+            <p>Hesap verileri hesap aktif olduğu sürece; misafir oturumları süreleri dolunca; rapor/moderasyon kayıtları güvenlik için makul süre saklanır. Hesap silme taleplerinde yasal saklama zorunlulukları saklıdır.</p>
+
+            <h2>7. Haklarınız</h2>
+            <p>Uygulanabilir hukuka göre erişim, düzeltme, silme, işlemenin kısıtlanması ve itiraz haklarınız olabilir. Talepleriniz için iletişim sayfasını kullanın.</p>
+
+            <h2>8. Güvenlik</h2>
+            <p>Şifreler hash’lenerek saklanır, bağlantılar HTTPS ile korunur, erişimler rol bazlı sınırlandırılır. Hiçbir sistem %100 riskten arınmış değildir; şüpheli durumu bize bildirin.</p>
+
+            <h2>9. Çocuklar</h2>
+            <p>LinguaTalk 18 yaş altı kullanıcılar için tasarlanmamıştır. Yaş ihlali tespitinde hesaplar kapatılabilir.</p>
+
+            <p class="legal-updated">Son güncelleme: 10 Ağustos 2026</p>
+        }
+        else
+        {
+            <h1>Privacy Policy</h1>
+            <p class="legal-lead">This policy explains what data LinguaTalk processes and how we protect it.</p>
+
+            <h2>1. Controller</h2>
+            <p>Personal data is processed by the operator of the LinguaTalk service. Use the <a asp-controller="Legal" asp-action="Contact">Contact</a> page for privacy requests.</p>
+
+            <h2>2. Data we collect</h2>
+            <ul>
+                <li><strong>Account data:</strong> email, display name, password hash, account status.</li>
+                <li><strong>Profile data:</strong> bio, language preferences, level, interest tags, optional avatar.</li>
+                <li><strong>Guest session:</strong> temporary display name, session id, last-seen time.</li>
+                <li><strong>Safety / usage:</strong> reports, moderation records, ban reasons, technical logs.</li>
+                <li><strong>Cookies:</strong> cookies needed for auth, language preference, and guest identity.</li>
+                <li><strong>Media:</strong> camera/microphone streams are exchanged peer-to-peer in the browser during a match; we do not permanently store call media on our servers.</li>
+            </ul>
+
+            <h2>3. Purposes</h2>
+            <ul>
+                <li>Account creation and sign-in</li>
+                <li>Matching and live conversation</li>
+                <li>Safety, abuse prevention, and moderation</li>
+                <li>Service improvement and troubleshooting</li>
+                <li>Compliance with legal obligations</li>
+            </ul>
+
+            <h2>4. Legal bases</h2>
+            <p>We process data to perform the service agreement, for legitimate interests (security and reliability), based on consent where required (for example media permissions), and where legally required.</p>
+
+            <h2>5. Sharing</h2>
+            <p>We do not sell your data. Infrastructure providers (hosting, database) may process data only as needed to run the service. We may disclose data when required by law.</p>
+
+            <h2>6. Retention</h2>
+            <p>Account data is kept while the account is active; guest sessions expire; moderation records are kept for a reasonable safety period. Deletion requests are handled subject to legal retention duties.</p>
+
+            <h2>7. Your rights</h2>
+            <p>Depending on applicable law, you may have rights to access, correct, delete, restrict, or object to processing. Contact us to make a request.</p>
+
+            <h2>8. Security</h2>
+            <p>Passwords are stored hashed, traffic uses HTTPS, and access is role-restricted. No system is perfectly secure—please report suspicious activity.</p>
+
+            <h2>9. Children</h2>
+            <p>LinguaTalk is not intended for users under 18. Accounts that violate the age rule may be closed.</p>
+
+            <p class="legal-updated">Last updated: 10 August 2026</p>
+        }
+    </article>
+</section>

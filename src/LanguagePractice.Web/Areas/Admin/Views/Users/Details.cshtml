@@ -40,8 +40,22 @@
                     @if (Model.IsBanned)
                     {
                         <span class="badge text-bg-danger">Banlı</span>
+                        @if (Model.ActiveBanType == BanType.Temporary)
+                        {
+                            <span class="badge text-bg-warning">Süreli</span>
+                        }
+                        else if (Model.ActiveBanType == BanType.Permanent)
+                        {
+                            <span class="badge text-bg-dark">Kalıcı</span>
+                        }
                         <div class="small text-muted mt-1">@Model.BanReason</div>
-                        <div class="small text-muted">@(Model.BannedAtUtc?.ToLocalTime().ToString("g"))</div>
+                        <div class="small text-muted">Başlangıç: @(Model.BannedAtUtc?.ToLocalTime().ToString("g") ?? "—")</div>
+                        <div class="small text-muted">
+                            Bitiş:
+                            @(Model.ActiveBanExpiresAtUtc.HasValue
+                                ? Model.ActiveBanExpiresAtUtc.Value.ToLocalTime().ToString("g")
+                                : "Kalıcı")
+                        </div>
                     }
                     else
                     {
@@ -77,6 +91,57 @@
                     }
                 </dd>
             </dl>
+        </div>
+
+        <div class="panel-card mb-3">
+            <h2 class="h6 mb-3">Ban geçmişi (@Model.BanHistory.Count)</h2>
+            @if (Model.BanHistory.Count == 0)
+            {
+                <p class="text-muted mb-0">Bu kullanıcı için ban kaydı yok.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table admin-table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tür</th>
+                                <th>Neden</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>Admin</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ban in Model.BanHistory)
+                            {
+                                <tr>
+                                    <td>
+                                        @(ban.BanType == BanType.Temporary ? "Süreli" : "Kalıcı")
+                                    </td>
+                                    <td class="small">@ban.Reason</td>
+                                    <td class="small text-nowrap">@ban.CreatedAtUtc.ToLocalTime().ToString("g")</td>
+                                    <td class="small text-nowrap">
+                                        @(ban.ExpiresAtUtc?.ToLocalTime().ToString("g") ?? "—")
+                                    </td>
+                                    <td class="small">@ban.CreatedByAdminName</td>
+                                    <td>
+                                        @if (ban.IsActive)
+                                        {
+                                            <span class="badge text-bg-danger">Aktif</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-secondary">Kapalı</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
 
         <div class="panel-card">
@@ -140,24 +205,82 @@
             <h2 class="h6 mb-3">Moderasyon</h2>
             @if (Model.IsBanned)
             {
-                <form asp-action="Unban" method="post">
+                <form asp-action="Unban" method="post" class="vstack gap-2">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="userId" value="@Model.Id" />
+                    <p class="small text-muted mb-0">
+                        Aktif banı kaldırmak için onaylayın.
+                        @if (Model.ActiveBanExpiresAtUtc.HasValue)
+                        {
+                            <span>Otomatik bitiş: @Model.ActiveBanExpiresAtUtc.Value.ToLocalTime().ToString("g")</span>
+                        }
+                    </p>
                     <button type="submit" class="btn btn-success w-100">Banı Kaldır</button>
                 </form>
             }
             else
             {
-                <form asp-action="Ban" method="post" class="vstack gap-3">
+                <form asp-action="Ban" method="post" class="vstack gap-3" id="banUserForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="UserId" value="@Model.Id" />
+
                     <div>
                         <label class="form-label" for="Reason">Ban nedeni</label>
                         <textarea class="form-control" id="Reason" name="Reason" rows="3" required minlength="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-danger w-100">Kullanıcıyı Banla</button>
+
+                    <div>
+                        <span class="form-label d-block">Ban türü</span>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="BanType" id="banTypeTemporary" value="temporary" checked>
+                            <label class="form-check-label" for="banTypeTemporary">Süreli ban</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="BanType" id="banTypePermanent" value="permanent">
+                            <label class="form-check-label" for="banTypePermanent">Kalıcı ban</label>
+                        </div>
+                    </div>
+
+                    <div id="tempBanFields" class="vstack gap-3">
+                        <div>
+                            <label class="form-label" for="DurationDays">Süre (gün)</label>
+                            <input class="form-control" type="number" id="DurationDays" name="DurationDays"
+                                   min="1" max="365" step="1" value="1" placeholder="örn. 7" />
+                            <div class="form-text text-muted">1–365 gün. Tarih girersen gün yerine tarih kullanılır.</div>
+                        </div>
+                        <div>
+                            <label class="form-label" for="BanUntilLocal">veya bitiş tarihi</label>
+                            <input class="form-control" type="datetime-local" id="BanUntilLocal" name="BanUntilLocal" />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100">Banı Uygula</button>
                 </form>
             }
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const tempRadio = document.getElementById("banTypeTemporary");
+            const permRadio = document.getElementById("banTypePermanent");
+            const fields = document.getElementById("tempBanFields");
+            const days = document.getElementById("DurationDays");
+            const until = document.getElementById("BanUntilLocal");
+            if (!tempRadio || !permRadio || !fields) return;
+
+            const sync = () => {
+                const isTemp = tempRadio.checked;
+                fields.classList.toggle("d-none", !isTemp);
+                if (days) days.disabled = !isTemp;
+                if (until) until.disabled = !isTemp;
+            };
+
+            tempRadio.addEventListener("change", sync);
+            permRadio.addEventListener("change", sync);
+            sync();
+        })();
+    </script>
+}

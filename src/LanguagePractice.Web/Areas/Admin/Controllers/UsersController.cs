@@ -109,6 +109,55 @@ public class UsersController : Controller
             })
             .ToListAsync(cancellationToken);
 
+        var banRows = await _db.BanRecords
+            .AsNoTracking()
+            .Where(x => x.UserId == id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(50)
+            .Select(x => new
+            {
+                x.Id,
+                x.BanType,
+                x.Reason,
+                x.CreatedAtUtc,
+                x.ExpiresAtUtc,
+                x.IsActive,
+                x.IsSystemGenerated,
+                x.CreatedByAdminId
+            })
+            .ToListAsync(cancellationToken);
+
+        var adminIds = banRows
+            .Select(x => x.CreatedByAdminId)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToList();
+
+        var adminNames = adminIds.Count == 0
+            ? new Dictionary<string, string>()
+            : await _userManager.Users.AsNoTracking()
+                .Where(x => adminIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.DisplayName })
+                .ToDictionaryAsync(x => x.Id, x => x.DisplayName, cancellationToken);
+
+        var banHistory = banRows.Select(x => new AdminUserBanHistoryItemViewModel
+        {
+            Id = x.Id,
+            BanType = x.BanType,
+            Reason = x.Reason,
+            CreatedAtUtc = x.CreatedAtUtc,
+            ExpiresAtUtc = x.ExpiresAtUtc,
+            IsActive = x.IsActive,
+            IsSystemGenerated = x.IsSystemGenerated,
+            CreatedByAdminName = x.IsSystemGenerated
+                ? "Sistem"
+                : (x.CreatedByAdminId != null && adminNames.TryGetValue(x.CreatedByAdminId, out var name)
+                    ? name
+                    : "—")
+        }).ToList();
+
+        var activeBan = banHistory.FirstOrDefault(x => x.IsActive);
+
         var interests = string.IsNullOrWhiteSpace(user.Profile?.Interests)
             ? Array.Empty<string>()
             : user.Profile!.Interests!
@@ -124,6 +173,8 @@ public class UsersController : Controller
             IsBanned = user.IsBanned,
             BanReason = user.BanReason,
             BannedAtUtc = user.BannedAtUtc,
+            ActiveBanExpiresAtUtc = activeBan?.ExpiresAtUtc,
+            ActiveBanType = activeBan?.BanType,
             IsActive = user.IsActive,
             Roles = roles.ToList(),
             Bio = user.Profile?.Bio,
@@ -133,7 +184,8 @@ public class UsersController : Controller
             Interests = interests,
             ReportCount = reportCount,
             OpenReportCount = openReportCount,
-            Reports = reports
+            Reports = reports,
+            BanHistory = banHistory
         };
 
         return View(model);
@@ -145,7 +197,7 @@ public class UsersController : Controller
     {
         if (!ModelState.IsValid)
         {
-            TempData["Error"] = "Ban nedeni gerekli.";
+            TempData["Error"] = "Ban formu geçersiz. Nedeni kontrol edin.";
             return RedirectToAction(nameof(Details), new { id = model.UserId });
         }
 
@@ -161,8 +213,31 @@ public class UsersController : Controller
             return RedirectToAction(nameof(Details), new { id = model.UserId });
         }
 
-        await _moderation.BanUserAsync(model.UserId, admin.Id, model.Reason, BanType.Permanent, cancellationToken: cancellationToken);
-        TempData["Success"] = "Kullanıcı banlandı.";
+        var banType = string.Equals(model.BanType, "permanent", StringComparison.OrdinalIgnoreCase)
+            ? BanType.Permanent
+            : BanType.Temporary;
+
+        TimeSpan? duration = null;
+        if (banType == BanType.Temporary)
+        {
+            if (!TryResolveTemporaryDuration(model, out duration, out var error))
+            {
+                TempData["Error"] = error;
+                return RedirectToAction(nameof(Details), new { id = model.UserId });
+            }
+        }
+
+        await _moderation.BanUserAsync(
+            model.UserId,
+            admin.Id,
+            model.Reason,
+            banType,
+            duration,
+            cancellationToken: cancellationToken);
+
+        TempData["Success"] = banType == BanType.Permanent
+            ? "Kullanıcı kalıcı banlandı."
+            : $"Kullanıcı süreli banlandı (bitiş: {DateTime.UtcNow.Add(duration!.Value).ToLocalTime():g}).";
         return RedirectToAction(nameof(Details), new { id = model.UserId });
     }
 
@@ -173,5 +248,42 @@ public class UsersController : Controller
         await _moderation.UnbanUserAsync(userId, cancellationToken);
         TempData["Success"] = "Ban kaldırıldı.";
         return RedirectToAction(nameof(Details), new { id = userId });
+    }
+
+    private static bool TryResolveTemporaryDuration(
+        BanUserViewModel model,
+        out TimeSpan? duration,
+        out string error)
+    {
+        duration = null;
+        error = string.Empty;
+
+        if (model.BanUntilLocal.HasValue)
+        {
+            var untilUtc = model.BanUntilLocal.Value.Kind switch
+            {
+                DateTimeKind.Utc => model.BanUntilLocal.Value,
+                DateTimeKind.Local => model.BanUntilLocal.Value.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(model.BanUntilLocal.Value, DateTimeKind.Local).ToUniversalTime()
+            };
+
+            if (untilUtc <= DateTime.UtcNow.AddMinutes(1))
+            {
+                error = "Bitiş tarihi gelecekte olmalı.";
+                return false;
+            }
+
+            duration = untilUtc - DateTime.UtcNow;
+            return true;
+        }
+
+        if (model.DurationDays is >= 1 and <= 365)
+        {
+            duration = TimeSpan.FromDays(model.DurationDays.Value);
+            return true;
+        }
+
+        error = "Süreli ban için gün sayısı veya bitiş tarihi girin.";
+        return false;
     }
 }

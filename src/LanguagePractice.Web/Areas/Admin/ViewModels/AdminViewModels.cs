@@ -25,6 +25,8 @@ public class AdminUserDetailsViewModel
     public bool IsBanned { get; set; }
     public string? BanReason { get; set; }
     public DateTime? BannedAtUtc { get; set; }
+    public DateTime? ActiveBanExpiresAtUtc { get; set; }
+    public BanType? ActiveBanType { get; set; }
     public bool IsActive { get; set; }
     public List<string> Roles { get; set; } = new();
     public string? Bio { get; set; }
@@ -35,6 +37,19 @@ public class AdminUserDetailsViewModel
     public int ReportCount { get; set; }
     public int OpenReportCount { get; set; }
     public List<AdminUserReportItemViewModel> Reports { get; set; } = new();
+    public List<AdminUserBanHistoryItemViewModel> BanHistory { get; set; } = new();
+}
+
+public class AdminUserBanHistoryItemViewModel
+{
+    public Guid Id { get; set; }
+    public BanType BanType { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? ExpiresAtUtc { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsSystemGenerated { get; set; }
+    public string? CreatedByAdminName { get; set; }
 }
 
 public class AdminUserReportItemViewModel
@@ -59,6 +74,19 @@ public class BanUserViewModel
     [Required, StringLength(500, MinimumLength = 3)]
     [Display(Name = "Ban nedeni")]
     public string Reason { get; set; } = string.Empty;
+
+    /// <summary>temporary | permanent</summary>
+    [Required]
+    [Display(Name = "Ban türü")]
+    public string BanType { get; set; } = "temporary";
+
+    [Range(1, 365)]
+    [Display(Name = "Süre (gün)")]
+    public int? DurationDays { get; set; }
+
+    /// <summary>Yerel tarih-saat (datetime-local). UTC'ye controller'da çevrilir.</summary>
+    [Display(Name = "Bitiş tarihi")]
+    public DateTime? BanUntilLocal { get; set; }
 }
 
 public class AdminReportListItemViewModel

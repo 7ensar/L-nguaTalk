@@ -1,0 +1,53 @@
+@using System.Globalization
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Legal_Contact"].Value;
+    var tr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("tr", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="legal-stage">
+    <article class="glass-card legal-card">
+        <partial name="_LegalNav" />
+        @if (tr)
+        {
+            <h1>İletişim</h1>
+            <p class="legal-lead">Destek, gizlilik talepleri veya yasal bildirimler için bize ulaşın.</p>
+
+            <h2>Destek</h2>
+            <p>Genel sorular ve hesap sorunları: <a href="mailto:support@linguatalk.app">support@linguatalk.app</a></p>
+
+            <h2>Gizlilik / KVKK talepleri</h2>
+            <p>Veri erişimi, düzeltme veya silme talepleri: <a href="mailto:privacy@linguatalk.app">privacy@linguatalk.app</a></p>
+
+            <h2>Güvenlik bildirimleri</h2>
+            <p>Güvenlik açığı veya kötüye kullanım: <a href="mailto:safety@linguatalk.app">safety@linguatalk.app</a></p>
+
+            <h2>Ne kadar sürede dönüş yapılır?</h2>
+            <p>Mesajları makul süre içinde yanıtlamaya çalışırız. Acil güvenlik durumlarında raporlama araçlarını da kullanın.</p>
+
+            <p class="legal-note">Not: Bu metinler bilgilendirme amaçlıdır; özel hukuki danışmanlık yerine geçmez. Canlı e-posta adreslerinizi güncellemeniz önerilir.</p>
+            <p class="legal-updated">Son güncelleme: 10 Ağustos 2026</p>
+        }
+        else
+        {
+            <h1>Contact</h1>
+            <p class="legal-lead">Reach us for support, privacy requests, or legal notices.</p>
+
+            <h2>Support</h2>
+            <p>General questions and account issues: <a href="mailto:support@linguatalk.app">support@linguatalk.app</a></p>
+
+            <h2>Privacy requests</h2>
+            <p>Access, correction, or deletion requests: <a href="mailto:privacy@linguatalk.app">privacy@linguatalk.app</a></p>
+
+            <h2>Safety reports</h2>
+            <p>Security issues or abuse: <a href="mailto:safety@linguatalk.app">safety@linguatalk.app</a></p>
+
+            <h2>Response time</h2>
+            <p>We aim to reply within a reasonable time. For urgent safety issues, also use in-app reporting tools.</p>
+
+            <p class="legal-note">Note: These pages are informational and not a substitute for legal advice. Update the email addresses to your live inboxes when ready.</p>
+            <p class="legal-updated">Last updated: 10 August 2026</p>
+        }
+    </article>
+</section>

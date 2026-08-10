@@ -1,0 +1,103 @@
+@using System.Globalization
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Legal_Terms"].Value;
+    var tr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("tr", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="legal-stage">
+    <article class="glass-card legal-card">
+        <partial name="_LegalNav" />
+        @if (tr)
+        {
+            <h1>Kullanım Koşulları</h1>
+            <p class="legal-lead">LinguaTalk’u kullanarak bu koşulları kabul etmiş sayılırsınız.</p>
+
+            <h2>1. Hizmetin tanımı</h2>
+            <p>LinguaTalk; dil pratiği için eşleştirme, canlı görüntülü görüşme ve ilgili topluluk araçları sunar. Hizmet “olduğu gibi” sağlanır ve kesintisiz erişim garanti edilmez.</p>
+
+            <h2>2. Uygunluk</h2>
+            <ul>
+                <li>En az 18 yaşında olmalısınız.</li>
+                <li>Doğru ve güncel bilgiler vermelisiniz.</li>
+                <li>Hesabınızın güvenliğinden siz sorumlusunuz.</li>
+            </ul>
+
+            <h2>3. Kabul edilebilir kullanım</h2>
+            <p>Şunlar yasaktır:</p>
+            <ul>
+                <li>Taciz, nefret söylemi, tehdit, cinsel istismar içeriği</li>
+                <li>Spam, dolandırıcılık, kimlik taklidi</li>
+                <li>18 yaş altı kullanıcı gibi davranmak veya çocuklara yönelik içerik</li>
+                <li>Hizmeti bozmaya, otomasyonla kötüye kullanmaya çalışmak</li>
+                <li>Yasadışı faaliyet</li>
+            </ul>
+
+            <h2>4. Moderasyon</h2>
+            <p>Raporları inceleyebilir, geçici veya kalıcı ban uygulayabilir, içerik/hesap erişimini kısıtlayabiliriz. Kararlar güvenlik ve topluluk sağlığı için alınır.</p>
+
+            <h2>5. Misafir kullanım</h2>
+            <p>Misafir oturumları sınırlı ve geçicidir. Üyelik gerektiren özellikler misafirlere açık olmayabilir.</p>
+
+            <h2>6. Fikri mülkiyet</h2>
+            <p>LinguaTalk markası, arayüzü ve yazılımı platforma aittir. İzinsiz kopyalama veya tersine mühendislik yasaktır.</p>
+
+            <h2>7. Sorumluluğun sınırlanması</h2>
+            <p>Kullanıcılar arası konuşma içeriklerinden kullanıcılar sorumludur. Uygulanabilir hukukun izin verdiği ölçüde; dolaylı zararlar, veri kaybı veya eşleşme kalitesinden doğan talepler sınırlıdır.</p>
+
+            <h2>8. Fesih</h2>
+            <p>Koşulları ihlal eden hesaplar askıya alınabilir veya kapatılabilir. İstediğiniz zaman hesabınızı bırakabilirsiniz.</p>
+
+            <h2>9. Değişiklikler</h2>
+            <p>Bu koşulları güncelleyebiliriz. Önemli değişikliklerde sayfada yeni tarih yayınlanır. Hizmeti kullanmaya devam etmek güncel koşulları kabul anlamına gelir.</p>
+
+            <p class="legal-updated">Son güncelleme: 10 Ağustos 2026</p>
+        }
+        else
+        {
+            <h1>Terms of Service</h1>
+            <p class="legal-lead">By using LinguaTalk you agree to these terms.</p>
+
+            <h2>1. The service</h2>
+            <p>LinguaTalk provides language-practice matching, live video conversations, and related community tools. The service is provided “as is” and uninterrupted availability is not guaranteed.</p>
+
+            <h2>2. Eligibility</h2>
+            <ul>
+                <li>You must be at least 18 years old.</li>
+                <li>You must provide accurate information.</li>
+                <li>You are responsible for keeping your account secure.</li>
+            </ul>
+
+            <h2>3. Acceptable use</h2>
+            <p>You must not:</p>
+            <ul>
+                <li>Harass, threaten, hate, or share sexual exploitation content</li>
+                <li>Spam, scam, or impersonate others</li>
+                <li>Pretend to be under 18 or target minors</li>
+                <li>Abuse, disrupt, or automate the service unfairly</li>
+                <li>Engage in illegal activity</li>
+            </ul>
+
+            <h2>4. Moderation</h2>
+            <p>We may review reports, apply temporary or permanent bans, and restrict access to protect safety and community health.</p>
+
+            <h2>5. Guest use</h2>
+            <p>Guest sessions are limited and temporary. Some features may require a registered account.</p>
+
+            <h2>6. Intellectual property</h2>
+            <p>The LinguaTalk brand, interface, and software belong to the platform. Unauthorized copying or reverse engineering is prohibited.</p>
+
+            <h2>7. Limitation of liability</h2>
+            <p>Users are responsible for what they say and show to each other. To the extent allowed by law, we are not liable for indirect damages, data loss, or match-quality claims.</p>
+
+            <h2>8. Termination</h2>
+            <p>Accounts that violate these terms may be suspended or closed. You may stop using the service at any time.</p>
+
+            <h2>9. Changes</h2>
+            <p>We may update these terms and will post a new date on this page. Continued use means you accept the updated terms.</p>
+
+            <p class="legal-updated">Last updated: 10 August 2026</p>
+        }
+    </article>
+</section>

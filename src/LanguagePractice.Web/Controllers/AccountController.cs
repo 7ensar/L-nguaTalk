@@ -1,6 +1,7 @@
 using LanguagePractice.Core.Constants;
 using LanguagePractice.Core.Entities;
 using LanguagePractice.Infrastructure.Data;
+using LanguagePractice.Infrastructure.Services;
 using LanguagePractice.Web.Localization;
 using LanguagePractice.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -15,17 +16,20 @@ public class AccountController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ApplicationDbContext _db;
+    private readonly IModerationService _moderation;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ApplicationDbContext db,
+        IModerationService moderation,
         IStringLocalizer<SharedResources> localizer)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _db = db;
+        _moderation = moderation;
         _localizer = localizer;
     }
 
@@ -90,8 +94,9 @@ public class AccountController : Controller
             return View(model);
         }
 
-        if (user.IsBanned)
+        if (await _moderation.IsUserBannedAsync(user.Id))
         {
+            user = await _userManager.FindByIdAsync(user.Id) ?? user;
             ModelState.AddModelError(
                 string.Empty,
                 _localizer["Login_Banned", user.BanReason ?? "—"]);

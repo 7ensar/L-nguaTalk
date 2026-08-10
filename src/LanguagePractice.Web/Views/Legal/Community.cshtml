@@ -1,0 +1,79 @@
+@using System.Globalization
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Legal_Community"].Value;
+    var tr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("tr", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="legal-stage">
+    <article class="glass-card legal-card">
+        <partial name="_LegalNav" />
+        @if (tr)
+        {
+            <h1>Topluluk Kuralları</h1>
+            <p class="legal-lead">LinguaTalk saygılı, güvenli ve öğrenmeye odaklı bir alan olsun diye bu kuralları uygularız.</p>
+
+            <h2>1. Saygı</h2>
+            <p>Partnerine saygılı ol. Hakaret, aşağılama, ayrımcılık ve tehdit kabul edilmez.</p>
+
+            <h2>2. Güvenli içerik</h2>
+            <ul>
+                <li>Cinsel içerik, çıplaklık veya müstehcen davranış yok</li>
+                <li>Şiddet, silah veya yasadışı faaliyet teşviki yok</li>
+                <li>Kişisel bilgileri zorla isteme / dolandırıcılık yok</li>
+            </ul>
+
+            <h2>3. Yaş</h2>
+            <p>Yalnızca 18+. 18 yaş altı olduğunu düşündüğün birini görürsen hemen raporla ve görüşmeyi bitir.</p>
+
+            <h2>4. Kamera ve mikrofon</h2>
+            <p>İzinleri yalnızca pratik için kullan. Başkasının görüntüsünü izinsiz kaydetmek veya yaymak yasaktır.</p>
+
+            <h2>5. Raporlama</h2>
+            <p>Uygunsuz davranışta “Rapor” kullan. Raporlar moderasyon ekibi tarafından incelenir; gerekirse geçici/kalıcı ban uygulanır.</p>
+
+            <h2>6. İyi pratik ipuçları</h2>
+            <ul>
+                <li>Dil hedefini net söyle</li>
+                <li>Sabırlı ve yardımsever ol</li>
+                <li>Rahatsız olursan “Sonraki” ile geç veya oturumu bırak</li>
+            </ul>
+
+            <p class="legal-updated">Son güncelleme: 10 Ağustos 2026</p>
+        }
+        else
+        {
+            <h1>Community Guidelines</h1>
+            <p class="legal-lead">These rules help keep LinguaTalk respectful, safer, and focused on learning.</p>
+
+            <h2>1. Respect</h2>
+            <p>Treat partners with respect. Insults, harassment, discrimination, and threats are not allowed.</p>
+
+            <h2>2. Safe content</h2>
+            <ul>
+                <li>No sexual content, nudity, or obscene behavior</li>
+                <li>No violence, weapons, or illegal activity</li>
+                <li>No scams or pressuring others for personal data</li>
+            </ul>
+
+            <h2>3. Age</h2>
+            <p>18+ only. If you believe someone is under 18, report immediately and end the call.</p>
+
+            <h2>4. Camera and microphone</h2>
+            <p>Use media permissions only for practice. Recording or sharing someone’s stream without consent is prohibited.</p>
+
+            <h2>5. Reporting</h2>
+            <p>Use Report for misconduct. Reports are reviewed by moderation and may lead to temporary or permanent bans.</p>
+
+            <h2>6. Practice tips</h2>
+            <ul>
+                <li>Share your language goal clearly</li>
+                <li>Be patient and helpful</li>
+                <li>If uncomfortable, tap Next or leave the session</li>
+            </ul>
+
+            <p class="legal-updated">Last updated: 10 August 2026</p>
+        }
+    </article>
+</section>

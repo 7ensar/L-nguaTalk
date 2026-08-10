@@ -1,0 +1,13 @@
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    var current = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<nav class="legal-nav" aria-label="@Localizer["Legal_NavLabel"]">
+    <a class="legal-nav-link @(current == "About" ? "active" : null)" asp-controller="Legal" asp-action="About">@Localizer["Legal_About"]</a>
+    <a class="legal-nav-link @(current == "Privacy" ? "active" : null)" asp-controller="Legal" asp-action="Privacy">@Localizer["Legal_Privacy"]</a>
+    <a class="legal-nav-link @(current == "Terms" ? "active" : null)" asp-controller="Legal" asp-action="Terms">@Localizer["Legal_Terms"]</a>
+    <a class="legal-nav-link @(current == "Cookies" ? "active" : null)" asp-controller="Legal" asp-action="Cookies">@Localizer["Legal_Cookies"]</a>
+    <a class="legal-nav-link @(current == "Community" ? "active" : null)" asp-controller="Legal" asp-action="Community">@Localizer["Legal_Community"]</a>
+    <a class="legal-nav-link @(current == "Contact" ? "active" : null)" asp-controller="Legal" asp-action="Contact">@Localizer["Legal_Contact"]</a>
+</nav>
