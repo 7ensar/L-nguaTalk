@@ -31,9 +31,17 @@ services:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: Database__Provider
-        value: Sqlite
-      - key: ConnectionStrings__Sqlite
-        value: Data Source=/data/linguatalk.db
+        value: PostgreSQL
+      - key: ConnectionStrings__PostgreSQL
+        value: Host=aws-0-ap-south-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.oliyycdgzxmjjvjridkp;Password=Ensar123!!.;SSL Mode=Require;Trust Server Certificate=true
+      - key: ConnectionStrings__DefaultConnection
+        value: Host=aws-0-ap-south-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.oliyycdgzxmjjvjridkp;Password=Ensar123!!.;SSL Mode=Require;Trust Server Certificate=true
+      - key: AdminSeed__Email
+        value: admin@linguatalk.local
+      - key: AdminSeed__Password
+        value: Admin123!
+      - key: AdminSeed__DisplayName
+        value: Sistem Admin
       - key: Signaling__PublicUrl
         value: https://l-nguatalk-1.onrender.com
       - key: Moderation__SignalingModerationKey
@@ -42,7 +50,3 @@ services:
         value: "true"
       - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
         value: "false"
-    disk:
-      name: linguatalk-sqlite
-      mountPath: /data
-      sizeGB: 1
