@@ -17,6 +17,10 @@ public class ApplicationUser : IdentityUser
     public string? BanReason { get; set; }
     public string? BannedByAdminId { get; set; }
 
+    /// <summary>Premium üyelik (öncelikli eşleşme vb.).</summary>
+    public bool IsPremium { get; set; }
+    public DateTime? PremiumExpiresAtUtc { get; set; }
+
     public UserProfile? Profile { get; set; }
     public ICollection<UserLanguage> Languages { get; set; } = new List<UserLanguage>();
     public ICollection<MatchHistory> MatchesAsUserA { get; set; } = new List<MatchHistory>();

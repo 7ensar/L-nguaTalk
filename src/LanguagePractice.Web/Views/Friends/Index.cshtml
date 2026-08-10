@@ -1,0 +1,63 @@
+@using LanguagePractice.Core.Entities
+@using LanguagePractice.Web.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Friends_Title"].Value;
+    var friends = (IReadOnlyList<Friendship>)(ViewBag.Friends ?? Array.Empty<Friendship>());
+    var pending = (IReadOnlyList<Friendship>)(ViewBag.Pending ?? Array.Empty<Friendship>());
+    var me = (string)ViewBag.UserId;
+}
+
+<div class="site-shell py-4">
+    <h1 class="h3 mb-3">@Localizer["Friends_Title"]</h1>
+
+    @if (pending.Count > 0)
+    {
+        <section class="glass-card p-3 mb-4">
+            <h2 class="h6 mb-3">@Localizer["Friends_Pending"]</h2>
+            <ul class="list-unstyled mb-0">
+                @foreach (var f in pending)
+                {
+                    <li class="d-flex align-items-center justify-content-between gap-2 py-2 border-bottom border-secondary border-opacity-25">
+                        <span>@f.Requester.DisplayName</span>
+                        <span class="d-flex gap-2">
+                            <form asp-action="Respond" method="post" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@f.Id" />
+                                <input type="hidden" name="accept" value="true" />
+                                <button class="btn btn-sm btn-primary" type="submit">@Localizer["Friends_Accept"]</button>
+                            </form>
+                            <form asp-action="Respond" method="post" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@f.Id" />
+                                <input type="hidden" name="accept" value="false" />
+                                <button class="btn btn-sm btn-soft" type="submit">@Localizer["Friends_Decline"]</button>
+                            </form>
+                        </span>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="glass-card p-3">
+        <h2 class="h6 mb-3">@Localizer["Friends_List"]</h2>
+        @if (friends.Count == 0)
+        {
+            <p class="text-muted mb-0">@Localizer["Friends_Empty"]</p>
+        }
+        else
+        {
+            <ul class="list-unstyled mb-0">
+                @foreach (var f in friends)
+                {
+                    var other = f.RequesterId == me ? f.Addressee : f.Requester;
+                    <li class="d-flex align-items-center justify-content-between gap-2 py-2 border-bottom border-secondary border-opacity-25">
+                        <a asp-controller="Profile" asp-action="Details" asp-route-id="@other.Id">@other.DisplayName</a>
+                        <a class="btn btn-sm btn-next" asp-action="Rematch" asp-route-userId="@other.Id">@Localizer["Friends_Rematch"]</a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>

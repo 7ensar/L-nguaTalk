@@ -3,6 +3,8 @@ import http from "node:http";
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 import { v4 as uuidv4 } from "uuid";
 import { MatchQueue } from "./matchQueue.js";
 import { RoomRegistry } from "./rooms.js";
@@ -161,11 +163,26 @@ app.post("/moderation/force-disconnect", (req, res) => {
   return res.json({ ok: true, affected });
 });
 
+function parseIntOrNull(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 function joinQueue(socket, payload = {}) {
   const name = (payload.displayName || "Guest").toString().slice(0, 80);
   const lang = (payload.languageCode || "en").toString().toLowerCase();
   const userId = payload.userId ? String(payload.userId).slice(0, 128) : null;
   const guestSessionId = payload.guestSessionId ? String(payload.guestSessionId).slice(0, 64) : null;
+  const interests = Array.isArray(payload.interests)
+    ? payload.interests.map((x) => String(x).toLowerCase().slice(0, 40)).slice(0, 12)
+    : [];
+  const blockedUserIds = Array.isArray(payload.blockedUserIds)
+    ? payload.blockedUserIds.map((x) => String(x).slice(0, 128)).slice(0, 200)
+    : [];
+  const rematchWithUserId = payload.rematchWithUserId
+    ? String(payload.rematchWithUserId).slice(0, 128)
+    : null;
 
   const existingRoom = rooms.getRoomIdForSocket(socket.id);
   if (existingRoom) {
@@ -183,7 +200,16 @@ function joinQueue(socket, payload = {}) {
     displayName: name,
     languageCode: lang,
     userId,
-    guestSessionId
+    guestSessionId,
+    languageLevel: parseIntOrNull(payload.languageLevel),
+    gender: parseIntOrNull(payload.gender),
+    preferredPartnerGender: parseIntOrNull(payload.preferredPartnerGender),
+    interests,
+    preferSimilarLevel: payload.preferSimilarLevel !== false,
+    preferSharedInterests: payload.preferSharedInterests !== false,
+    isPremium: !!payload.isPremium,
+    blockedUserIds,
+    rematchWithUserId
   });
 
   if (match?.overflow) {
@@ -192,9 +218,14 @@ function joinQueue(socket, payload = {}) {
   }
 
   if (!match) {
+    const position = queue.size(lang);
     socket.emit("queue:waiting", {
       languageCode: lang,
-      positionHint: queue.size(lang)
+      positionHint: position,
+      estimatedWaitSec: Math.round(queue.estimatedWaitMs(lang) / 1000),
+      tip: position <= 1
+        ? "You're first in line — hang tight while we find a partner."
+        : `${position} people waiting in this language queue.`
     });
     return;
   }
@@ -209,30 +240,20 @@ function joinQueue(socket, payload = {}) {
   if (!socketA || !socketB) {
     if (socketA) {
       rooms.leave(match.a.socketId);
-      queue.enqueue({
-        socketId: match.a.socketId,
-        displayName: match.a.displayName,
-        languageCode: match.languageCode,
-        userId: match.a.userId,
-        guestSessionId: match.a.guestSessionId
-      });
+      queue.enqueue({ ...match.a, languageCode: match.languageCode });
       socketA.emit("queue:waiting", {
         languageCode: match.languageCode,
-        positionHint: queue.size(match.languageCode)
+        positionHint: queue.size(match.languageCode),
+        estimatedWaitSec: Math.round(queue.estimatedWaitMs(match.languageCode) / 1000)
       });
     }
     if (socketB) {
       rooms.leave(match.b.socketId);
-      queue.enqueue({
-        socketId: match.b.socketId,
-        displayName: match.b.displayName,
-        languageCode: match.languageCode,
-        userId: match.b.userId,
-        guestSessionId: match.b.guestSessionId
-      });
+      queue.enqueue({ ...match.b, languageCode: match.languageCode });
       socketB.emit("queue:waiting", {
         languageCode: match.languageCode,
-        positionHint: queue.size(match.languageCode)
+        positionHint: queue.size(match.languageCode),
+        estimatedWaitSec: Math.round(queue.estimatedWaitMs(match.languageCode) / 1000)
       });
     }
     return;
@@ -482,6 +503,28 @@ setInterval(() => {
     }
   }
 }, 60_000).unref?.();
+
+async function setupRedisAdapter() {
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) {
+    console.log("REDIS_URL not set — single-instance in-memory adapter");
+    return;
+  }
+
+  try {
+    const pubClient = createClient({ url: redisUrl });
+    const subClient = pubClient.duplicate();
+    pubClient.on("error", (err) => console.error("[redis pub]", err.message));
+    subClient.on("error", (err) => console.error("[redis sub]", err.message));
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("Socket.IO Redis adapter enabled");
+  } catch (err) {
+    console.error("Redis adapter failed, continuing in-memory:", err.message);
+  }
+}
+
+await setupRedisAdapter();
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`LinguaTalk signaling listening on 0.0.0.0:${PORT}`);

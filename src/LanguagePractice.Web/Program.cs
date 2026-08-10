@@ -28,10 +28,25 @@ builder.Services.Configure<SignalingOptions>(
     builder.Configuration.GetSection(SignalingOptions.SectionName));
 builder.Services.Configure<ModerationOptions>(
     builder.Configuration.GetSection(ModerationOptions.SectionName));
+builder.Services.Configure<AuthExternalOptions>(
+    builder.Configuration.GetSection(AuthExternalOptions.SectionName));
 
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddAppLocalization();
 builder.Services.AddControllers();
+
+var googleAuth = builder.Configuration.GetSection("Authentication:Google");
+var googleClientId = googleAuth["ClientId"];
+var googleClientSecret = googleAuth["ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle(options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+        });
+}
 
 builder.Services.AddRateLimiter(options =>
 {

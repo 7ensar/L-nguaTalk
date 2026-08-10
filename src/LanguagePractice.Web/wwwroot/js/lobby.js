@@ -29,6 +29,15 @@
   const chatInput = document.getElementById("chatInput");
   const chatSendBtn = document.getElementById("chatSendBtn");
   const chatPeerLabel = document.getElementById("chatPeerLabel");
+  const toggleMicBtn = document.getElementById("toggleMicBtn");
+  const toggleCamBtn = document.getElementById("toggleCamBtn");
+  const topicText = document.getElementById("topicText");
+  const nextTopicBtn = document.getElementById("nextTopicBtn");
+  const queueHintText = document.getElementById("queueHintText");
+  const socialActions = document.getElementById("socialActions");
+  const friendBtn = document.getElementById("friendBtn");
+  const blockBtn = document.getElementById("blockBtn");
+  const ratingModalEl = document.getElementById("ratingModal");
 
   let socket = null;
   let pc = null;
@@ -44,6 +53,14 @@
   let suppressAutoRequeue = false;
   let mediaGateOpen = false;
   let resumeJoinAfterMedia = false;
+  let micEnabled = true;
+  let camEnabled = true;
+  let matchStartedAt = null;
+  let topicIndex = 0;
+  const topics = Array.isArray(cfg.topics) ? cfg.topics : [];
+  const ratingModal = ratingModalEl && window.bootstrap
+    ? bootstrap.Modal.getOrCreateInstance(ratingModalEl)
+    : null;
   /** @type {RTCIceCandidateInit[]} */
   let pendingRemoteIce = [];
   const reportModal = reportModalEl && window.bootstrap
@@ -134,7 +151,93 @@
     if (reportBtn) reportBtn.disabled = !canReport;
     if (reportFab) reportFab.hidden = !canReport;
     if (backToLobbyBtn) backToLobbyBtn.hidden = !(queued || matched);
+    if (socialActions) socialActions.hidden = !matched || !!cfg.isGuest;
     setChatEnabled(!!matched && !mediaGateOpen);
+  }
+
+  function showTopic(index) {
+    if (!topicText || !topics.length) return;
+    topicIndex = ((index % topics.length) + topics.length) % topics.length;
+    topicText.textContent = topics[topicIndex];
+  }
+
+  function notifyMatch(title, body) {
+    if (!cfg.browserNotifications || typeof Notification === "undefined") return;
+    if (Notification.permission === "granted") {
+      try { new Notification(title, { body, silent: false }); } catch (_) { /* ignore */ }
+    } else if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+
+  function buildIceServers() {
+    const fromCfg = Array.isArray(cfg.iceServers) ? cfg.iceServers : [];
+    const mapped = fromCfg
+      .map((s) => {
+        const urls = s.urls || s.Urls;
+        if (!urls || (Array.isArray(urls) && urls.length === 0)) return null;
+        const row = { urls };
+        if (s.username || s.Username) row.username = s.username || s.Username;
+        if (s.credential || s.Credential) row.credential = s.credential || s.Credential;
+        return row;
+      })
+      .filter(Boolean);
+    if (mapped.length) return mapped;
+    return [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" }
+    ];
+  }
+
+  function queuePayload() {
+    return {
+      displayName: cfg.displayName || "Guest",
+      languageCode: getSelectedLanguage(),
+      userId: cfg.userId || null,
+      guestSessionId: cfg.guestSessionId || null,
+      languageLevel: cfg.languageLevel ?? null,
+      gender: cfg.gender ?? null,
+      preferredPartnerGender: cfg.preferredPartnerGender ?? null,
+      interests: cfg.interests || [],
+      preferSimilarLevel: cfg.preferSimilarLevel !== false,
+      preferSharedInterests: cfg.preferSharedInterests !== false,
+      isPremium: !!cfg.isPremium,
+      blockedUserIds: cfg.blockedUserIds || [],
+      rematchWithUserId: cfg.rematchWithUserId || null
+    };
+  }
+
+  async function completeMatchOnServer() {
+    if (!currentRoomId || !matchStartedAt) return;
+    const durationSeconds = Math.max(0, Math.round((Date.now() - matchStartedAt) / 1000));
+    const roomId = currentRoomId;
+    try {
+      await fetch(`/api/social/matches/${encodeURIComponent(roomId)}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ durationSeconds })
+      });
+    } catch (_) { /* ignore */ }
+  }
+
+  function openRatingIfNeeded() {
+    if (!cfg.userId || !currentRoomId || cfg.isGuest) return;
+    if (ratingModalEl) ratingModalEl.dataset.roomId = currentRoomId;
+    ratingModal?.show();
+  }
+
+  function syncMediaToggleUi() {
+    if (toggleMicBtn) {
+      toggleMicBtn.classList.toggle("is-off", !micEnabled);
+      toggleMicBtn.setAttribute("aria-pressed", micEnabled ? "true" : "false");
+      toggleMicBtn.textContent = micEnabled ? "Mic" : "Mic off";
+    }
+    if (toggleCamBtn) {
+      toggleCamBtn.classList.toggle("is-off", !camEnabled);
+      toggleCamBtn.setAttribute("aria-pressed", camEnabled ? "true" : "false");
+      toggleCamBtn.textContent = camEnabled ? "Cam" : "Cam off";
+    }
   }
 
   function openReportModal() {
@@ -302,10 +405,7 @@
     destroyPeerConnection();
 
     pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" }
-      ]
+      iceServers: buildIceServers()
     });
 
     localStream.getTracks().forEach((track) => {
@@ -347,7 +447,13 @@
     };
   }
 
-  function leaveCurrentRoom({ notifyServer = true } = {}) {
+  async function leaveCurrentRoom({ notifyServer = true, complete = true, askRating = false } = {}) {
+    if (complete) {
+      await completeMatchOnServer();
+    }
+    if (askRating) {
+      openRatingIfNeeded();
+    }
     if (notifyServer && socket && currentRoomId) {
       socket.emit("room:leave", { roomId: currentRoomId });
     }
@@ -357,11 +463,13 @@
     peerUserId = null;
     peerGuestSessionId = null;
     isOfferer = false;
+    matchStartedAt = null;
     if (remoteVideo) remoteVideo.srcObject = null;
     setRemoteVisible(false);
     destroyPeerConnection();
     clearChat();
     setChatEnabled(false);
+    if (socialActions) socialActions.hidden = true;
   }
 
   function connectSocket() {
@@ -418,10 +526,16 @@
         }
       });
 
-      socket.on("queue:waiting", () => {
+      socket.on("queue:waiting", (payload = {}) => {
         inQueue = true;
         setControls({ queued: true, matched: false });
-        setStatus(t.waiting || "Waiting for a match...");
+        const eta = payload.estimatedWaitSec
+          ? format(t.queueEta || "Est. wait ~{0}s · {1} in queue", payload.estimatedWaitSec, payload.positionHint ?? "?")
+          : (t.waiting || "Waiting for a match...");
+        setStatus(eta);
+        if (queueHintText) {
+          queueHintText.textContent = payload.tip || (t.waiting || "Waiting for a match...");
+        }
         setRemoteVisible(false);
       });
 
@@ -451,10 +565,14 @@
           peerGuestSessionId = payload.peerGuestSessionId || null;
           isOfferer = !!payload.isOfferer;
           inQueue = false;
+          matchStartedAt = Date.now();
+          cfg.rematchWithUserId = null;
           clearChat();
+          showTopic(Math.floor(Math.random() * Math.max(topics.length, 1)));
           setControls({ queued: false, matched: true });
           setStatus(format(t.matched || "Matched with {0}. Room: {1}", peerName, currentRoomId));
           toast.success(format(t.toastMatched || "Matched with {0}", peerName));
+          notifyMatch("LinguaTalk", format(t.toastMatched || "Matched with {0}", peerName));
 
           await ensureMedia();
           createPeerConnection();
@@ -593,12 +711,7 @@
       }
 
       const languageCode = getSelectedLanguage();
-      socket.emit("queue:join", {
-        displayName: cfg.displayName || "Guest",
-        languageCode,
-        userId: cfg.userId || null,
-        guestSessionId: cfg.guestSessionId || null
-      });
+      socket.emit("queue:join", queuePayload());
 
       inQueue = true;
       setStatus(t.queued || "Added to the queue...");
@@ -651,14 +764,11 @@
     await joinQueue({ fromPeerLeft: true });
   }
 
-  function leaveQueueAndCall() {
+  async function leaveQueueAndCall() {
     if (socket?.connected) {
       socket.emit("queue:leave");
-      if (currentRoomId) {
-        socket.emit("room:leave", { roomId: currentRoomId });
-      }
     }
-    leaveCurrentRoom();
+    await leaveCurrentRoom({ notifyServer: true, complete: true, askRating: !!currentRoomId });
     inQueue = false;
     setControls({ queued: false, matched: false });
     setStatus(t.ready || "Ready.");
@@ -771,15 +881,86 @@
 
   leaveBtn?.addEventListener("click", () => {
     if (mediaGateOpen) return;
-    leaveQueueAndCall();
+    void leaveQueueAndCall();
   });
 
   backToLobbyBtn?.addEventListener("click", () => {
     if (mediaGateOpen) return;
-    leaveQueueAndCall();
-    setStatus(t.ready || "Ready.");
-    toast.info(t.toastBackToLobby || t.toastLeft || "Back to lobby.");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    void leaveQueueAndCall().then(() => {
+      setStatus(t.ready || "Ready.");
+      toast.info(t.toastBackToLobby || t.toastLeft || "Back to lobby.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  toggleMicBtn?.addEventListener("click", () => {
+    micEnabled = !micEnabled;
+    localStream?.getAudioTracks().forEach((tr) => { tr.enabled = micEnabled; });
+    syncMediaToggleUi();
+  });
+
+  toggleCamBtn?.addEventListener("click", () => {
+    camEnabled = !camEnabled;
+    localStream?.getVideoTracks().forEach((tr) => { tr.enabled = camEnabled; });
+    syncMediaToggleUi();
+  });
+
+  nextTopicBtn?.addEventListener("click", () => showTopic(topicIndex + 1));
+
+  friendBtn?.addEventListener("click", () => {
+    if (!peerUserId || cfg.isGuest) return;
+    void fetch("/api/social/friends/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ userId: peerUserId })
+    }).then((res) => {
+      if (res.ok) toast.success(t.toastFriendSent || "Friend request sent.");
+      else toast.error(t.toastGenericError || "Could not send request.");
+    }).catch(() => toast.error(t.toastGenericError || "Could not send request."));
+  });
+
+  blockBtn?.addEventListener("click", () => {
+    if (cfg.isGuest) return;
+    void fetch("/api/social/block", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        userId: peerUserId || null,
+        guestSessionId: peerGuestSessionId || null,
+        reason: "blocked-from-lobby"
+      })
+    }).then(async (res) => {
+      if (!res.ok) {
+        toast.error(t.toastGenericError || "Could not block.");
+        return;
+      }
+      if (peerUserId) {
+        cfg.blockedUserIds = [...(cfg.blockedUserIds || []), peerUserId];
+      }
+      toast.warn(t.toastBlocked || "User blocked.");
+      await leaveQueueAndCall();
+    }).catch(() => toast.error(t.toastGenericError || "Could not block."));
+  });
+
+  document.querySelectorAll(".rating-star").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const rating = Number(btn.getAttribute("data-rating") || 0);
+      const roomId = currentRoomId;
+      // rating modal may open while room id still known via dataset
+      const rateRoom = ratingModalEl?.dataset.roomId || roomId;
+      if (!rateRoom || !rating) return;
+      void fetch(`/api/social/matches/${encodeURIComponent(rateRoom)}/rate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ rating })
+      }).then((res) => {
+        if (res.ok) toast.success(t.toastRated || "Thanks for rating!");
+        ratingModal?.hide();
+      });
+    });
   });
 
   reportBtn?.addEventListener("click", () => {
@@ -814,6 +995,11 @@
   setRemoteVisible(false);
   clearChat();
   setControls({ queued: false, matched: false });
+  showTopic(0);
+  syncMediaToggleUi();
+  if (cfg.browserNotifications && typeof Notification !== "undefined" && Notification.permission === "default") {
+    Notification.requestPermission().catch(() => {});
+  }
 
   if (cfg.autoStart) {
     setTimeout(() => {

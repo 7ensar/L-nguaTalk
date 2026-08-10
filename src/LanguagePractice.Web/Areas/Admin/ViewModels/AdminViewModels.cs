@@ -28,6 +28,8 @@ public class AdminUserDetailsViewModel
     public DateTime? ActiveBanExpiresAtUtc { get; set; }
     public BanType? ActiveBanType { get; set; }
     public bool IsActive { get; set; }
+    public bool IsPremium { get; set; }
+    public DateTime? PremiumExpiresAtUtc { get; set; }
     public List<string> Roles { get; set; } = new();
     public string? Bio { get; set; }
     public string? NativeLanguageCode { get; set; }

@@ -1,11 +1,12 @@
 services:
   # Node.js signaling / WebRTC matchmaking
+  # Always-on için Render dashboard'dan plan: starter (veya üstü) seçin.
   - type: web
     name: linguatalk-signaling
     runtime: node
     rootDir: src/signaling-service
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: node src/server.js
     plan: free
     healthCheckPath: /health
     envVars:
@@ -19,6 +20,11 @@ services:
         value: https://l-nguatalk.onrender.com
       - key: MODERATION_KEY
         value: dev-moderation-key
+      # Opsiyonel: Redis URL (çoklu instance Socket.IO). Kuyruk hâlâ process belleğinde.
+      - key: REDIS_URL
+        sync: false
+      - key: MAX_CONNECTIONS
+        value: "1500"
 
   # ASP.NET Core web (Docker)
   - type: web

@@ -63,6 +63,9 @@ public static class DependencyInjection
 
         services.Configure<ModerationOptions>(configuration.GetSection(ModerationOptions.SectionName));
         services.Configure<SignalingOptions>(configuration.GetSection(SignalingOptions.SectionName));
+        services.Configure<WebRtcOptions>(configuration.GetSection(WebRtcOptions.SectionName));
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.Configure<AuthExternalOptions>(configuration.GetSection(AuthExternalOptions.SectionName));
 
         var signalingUrl = configuration[$"{SignalingOptions.SectionName}:PublicUrl"] ?? "http://localhost:5050";
         // Render free tier cold-start için daha toleranslı timeout
@@ -83,6 +86,8 @@ public static class DependencyInjection
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<ISocialService, SocialService>();
+        services.AddSingleton<IAppEmailSender, AppEmailSender>();
 
         return services;
     }

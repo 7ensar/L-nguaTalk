@@ -176,6 +176,8 @@ public class UsersController : Controller
             ActiveBanExpiresAtUtc = activeBan?.ExpiresAtUtc,
             ActiveBanType = activeBan?.BanType,
             IsActive = user.IsActive,
+            IsPremium = user.IsPremium && (user.PremiumExpiresAtUtc is null || user.PremiumExpiresAtUtc > DateTime.UtcNow),
+            PremiumExpiresAtUtc = user.PremiumExpiresAtUtc,
             Roles = roles.ToList(),
             Bio = user.Profile?.Bio,
             NativeLanguageCode = user.Profile?.NativeLanguageCode,
@@ -189,6 +191,33 @@ public class UsersController : Controller
         };
 
         return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPremium(string userId, int days = 30, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (days <= 0)
+        {
+            user.IsPremium = false;
+            user.PremiumExpiresAtUtc = null;
+            TempData["Success"] = "Premium kaldırıldı.";
+        }
+        else
+        {
+            user.IsPremium = true;
+            user.PremiumExpiresAtUtc = DateTime.UtcNow.AddDays(Math.Clamp(days, 1, 3650));
+            TempData["Success"] = $"Premium {days} gün verildi.";
+        }
+
+        await _userManager.UpdateAsync(user);
+        return RedirectToAction(nameof(Details), new { id = userId });
     }
 
     [HttpPost]

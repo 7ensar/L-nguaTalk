@@ -19,6 +19,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<UserReport> UserReports => Set<UserReport>();
     public DbSet<BanRecord> BanRecords => Set<BanRecord>();
     public DbSet<InterestTag> InterestTags => Set<InterestTag>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+    public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
+    public DbSet<ConversationTopic> ConversationTopics => Set<ConversationTopic>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

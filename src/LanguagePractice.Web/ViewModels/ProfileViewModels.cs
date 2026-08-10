@@ -57,6 +57,11 @@ public sealed class ProfileEditViewModel
 
     public bool IsDiscoverable { get; set; } = true;
 
+    public Gender? PreferredPartnerGender { get; set; }
+    public bool PreferSimilarLevel { get; set; } = true;
+    public bool PreferSharedInterests { get; set; } = true;
+    public bool BrowserNotificationsEnabled { get; set; } = true;
+
     public string? CurrentAvatarUrl { get; set; }
 
     [DataType(DataType.Upload)]

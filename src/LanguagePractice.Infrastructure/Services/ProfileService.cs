@@ -40,6 +40,10 @@ public sealed class ProfileUpdateInput
     public Gender? Gender { get; set; }
     public IReadOnlyList<string> Interests { get; set; } = Array.Empty<string>();
     public bool IsDiscoverable { get; set; } = true;
+    public Gender? PreferredPartnerGender { get; set; }
+    public bool PreferSimilarLevel { get; set; } = true;
+    public bool PreferSharedInterests { get; set; } = true;
+    public bool BrowserNotificationsEnabled { get; set; } = true;
 }
 
 public interface IProfileService
@@ -178,6 +182,10 @@ public sealed class ProfileService : IProfileService
         profile.Gender = input.Gender;
         profile.Interests = SerializeInterests(input.Interests);
         profile.IsDiscoverable = input.IsDiscoverable;
+        profile.PreferredPartnerGender = input.PreferredPartnerGender;
+        profile.PreferSimilarLevel = input.PreferSimilarLevel;
+        profile.PreferSharedInterests = input.PreferSharedInterests;
+        profile.BrowserNotificationsEnabled = input.BrowserNotificationsEnabled;
         profile.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(cancellationToken);

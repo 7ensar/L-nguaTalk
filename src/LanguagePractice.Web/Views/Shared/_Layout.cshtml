@@ -47,6 +47,7 @@
                         <div class="profile-menu" id="profileMenuPanel" role="menu" hidden>
                             <a class="profile-menu-item" role="menuitem" asp-area="" asp-controller="Profile" asp-action="Index">@Localizer["Nav_Profile"]</a>
                             <a class="profile-menu-item" role="menuitem" asp-area="" asp-controller="Profile" asp-action="Edit">@Localizer["Nav_EditProfile"]</a>
+                            <a class="profile-menu-item" role="menuitem" asp-area="" asp-controller="Friends" asp-action="Index">@Localizer["Nav_Friends"]</a>
                             <a class="profile-menu-item" role="menuitem" asp-area="" asp-controller="Match" asp-action="Lobby">@Localizer["Nav_Lobby"]</a>
                             @if (User.IsInRole(AppRoles.Admin))
                             {

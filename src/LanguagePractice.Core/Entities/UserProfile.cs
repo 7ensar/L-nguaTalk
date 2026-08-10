@@ -23,6 +23,13 @@ public class UserProfile
     public string? Interests { get; set; }
 
     public bool IsDiscoverable { get; set; } = true;
+
+    /// <summary>Eşleşmede tercih edilen cinsiyet; null = fark etmez.</summary>
+    public Gender? PreferredPartnerGender { get; set; }
+    public bool PreferSimilarLevel { get; set; } = true;
+    public bool PreferSharedInterests { get; set; } = true;
+    public bool BrowserNotificationsEnabled { get; set; } = true;
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public ApplicationUser User { get; set; } = null!;

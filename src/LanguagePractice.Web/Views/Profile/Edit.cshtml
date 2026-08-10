@@ -136,9 +136,32 @@
                     }
                 </div>
 
-                <div class="form-check mb-4">
+                <div class="form-check mb-3">
                     <input asp-for="IsDiscoverable" class="form-check-input" />
                     <label asp-for="IsDiscoverable" class="form-check-label">@Localizer["Profile_Discoverable"]</label>
+                </div>
+
+                <h2 class="h6 text-muted mb-2">@Localizer["Profile_MatchPrefs"]</h2>
+                <div class="mb-3">
+                    <label asp-for="PreferredPartnerGender" class="form-label text-muted">@Localizer["Profile_PreferredPartner"]</label>
+                    <select asp-for="PreferredPartnerGender" class="form-select">
+                        <option value="">@Localizer["Profile_Gender_Any"]</option>
+                        <option value="@Gender.Female">@Localizer["Profile_Gender_Female"]</option>
+                        <option value="@Gender.Male">@Localizer["Profile_Gender_Male"]</option>
+                        <option value="@Gender.Other">@Localizer["Profile_Gender_Other"]</option>
+                    </select>
+                </div>
+                <div class="form-check mb-2">
+                    <input asp-for="PreferSimilarLevel" class="form-check-input" />
+                    <label asp-for="PreferSimilarLevel" class="form-check-label">@Localizer["Profile_PreferSimilarLevel"]</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input asp-for="PreferSharedInterests" class="form-check-input" />
+                    <label asp-for="PreferSharedInterests" class="form-check-label">@Localizer["Profile_PreferSharedInterests"]</label>
+                </div>
+                <div class="form-check mb-4">
+                    <input asp-for="BrowserNotificationsEnabled" class="form-check-input" />
+                    <label asp-for="BrowserNotificationsEnabled" class="form-check-label">@Localizer["Profile_BrowserNotifications"]</label>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">

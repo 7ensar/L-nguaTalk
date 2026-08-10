@@ -35,6 +35,32 @@
                 <dd class="col-sm-8">
                     @(Model.Roles.Count == 0 ? "Yok" : string.Join(", ", Model.Roles))
                 </dd>
+                <dt class="col-sm-4">Premium</dt>
+                <dd class="col-sm-8">
+                    @if (Model.IsPremium)
+                    {
+                        <span class="badge text-bg-warning">Premium</span>
+                        <div class="small text-muted">Bitiş: @(Model.PremiumExpiresAtUtc?.ToLocalTime().ToString("g") ?? "süresiz")</div>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">Standart</span>
+                    }
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <form asp-action="SetPremium" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@Model.Id" />
+                            <input type="hidden" name="days" value="30" />
+                            <button class="btn btn-sm btn-warning" type="submit">+30 gün Premium</button>
+                        </form>
+                        <form asp-action="SetPremium" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@Model.Id" />
+                            <input type="hidden" name="days" value="0" />
+                            <button class="btn btn-sm btn-outline-secondary" type="submit">Premium kaldır</button>
+                        </form>
+                    </div>
+                </dd>
                 <dt class="col-sm-4">Durum</dt>
                 <dd class="col-sm-8">
                     @if (Model.IsBanned)

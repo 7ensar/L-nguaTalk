@@ -134,6 +134,10 @@ public class ProfileController : Controller
             Gender = profile.Gender,
             InterestsRaw = profile.Interests,
             IsDiscoverable = profile.IsDiscoverable,
+            PreferredPartnerGender = profile.PreferredPartnerGender,
+            PreferSimilarLevel = profile.PreferSimilarLevel,
+            PreferSharedInterests = profile.PreferSharedInterests,
+            BrowserNotificationsEnabled = profile.BrowserNotificationsEnabled,
             CurrentAvatarUrl = profile.AvatarUrl,
             LanguageOptions = await BuildLanguageOptionsAsync(cancellationToken)
         };
@@ -190,7 +194,11 @@ public class ProfileController : Controller
                 LanguageLevel = model.LanguageLevel,
                 Gender = model.Gender,
                 Interests = selected,
-                IsDiscoverable = model.IsDiscoverable
+                IsDiscoverable = model.IsDiscoverable,
+                PreferredPartnerGender = model.PreferredPartnerGender,
+                PreferSimilarLevel = model.PreferSimilarLevel,
+                PreferSharedInterests = model.PreferSharedInterests,
+                BrowserNotificationsEnabled = model.BrowserNotificationsEnabled
             }, cancellationToken);
         }
         catch (ArgumentException ex)

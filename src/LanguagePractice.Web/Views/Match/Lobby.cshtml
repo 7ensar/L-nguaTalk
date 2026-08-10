@@ -1,3 +1,4 @@
+@using LanguagePractice.Infrastructure.Services
 @using LanguagePractice.Web.Localization
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
 @{
@@ -10,6 +11,10 @@
     var autoStart = (bool)(ViewBag.AutoStart ?? false);
     var userId = ViewBag.UserId as string;
     var guestSessionId = ViewBag.GuestSessionId as Guid?;
+    var iceServers = ViewBag.IceServers as List<IceServerOptions> ?? new List<IceServerOptions>();
+    var topics = ViewBag.Topics as List<string> ?? new List<string>();
+    var interests = ViewBag.Interests as string[] ?? Array.Empty<string>();
+    var blocked = ViewBag.BlockedUserIds as IReadOnlyList<string> ?? Array.Empty<string>();
 }
 
 <div class="lobby-page">
@@ -20,6 +25,10 @@
                 @Localizer["Lobby_Hello"] <strong style="color:var(--text)">@displayName</strong>
                 @(isGuest ? Localizer["Lobby_GuestTag"].Value : "")
                 <span class="ms-1">· @languageCode.ToUpperInvariant()</span>
+                @if (ViewBag.IsPremium == true)
+                {
+                    <span class="badge text-bg-warning ms-1">@Localizer["Lobby_Premium"]</span>
+                }
             </div>
         </div>
         <div class="lobby-top-actions">
@@ -36,10 +45,14 @@
             <div class="video-empty" id="videoEmpty">
                 <div>
                     <strong>@Localizer["Lobby_WaitingTitle"]</strong>
-                    <span>@Localizer["Lobby_WaitingHint"]</span>
+                    <span id="queueHintText">@Localizer["Lobby_WaitingHint"]</span>
                 </div>
             </div>
             <video id="localVideo" class="video-local" autoplay muted playsinline></video>
+            <div class="video-media-toggles">
+                <button id="toggleMicBtn" class="btn-media-toggle" type="button" aria-pressed="true" title="@Localizer["Lobby_Mute"]">Mic</button>
+                <button id="toggleCamBtn" class="btn-media-toggle" type="button" aria-pressed="true" title="@Localizer["Lobby_CameraOff"]">Cam</button>
+            </div>
             <button id="reportFab" class="btn-report-fab" type="button" hidden>
                 @Localizer["Lobby_Report"]
             </button>
@@ -49,6 +62,12 @@
             <div class="lobby-side-head">
                 <h2>@Localizer["Lobby_LiveChat"]</h2>
                 <span class="chat-peer-label" id="chatPeerLabel">@Localizer["Lobby_ChatIdle"]</span>
+            </div>
+
+            <div class="topic-card" id="topicCard">
+                <div class="small text-muted mb-1">@Localizer["Lobby_Topic"]</div>
+                <div id="topicText" class="topic-text">—</div>
+                <button type="button" class="btn btn-soft btn-sm mt-2" id="nextTopicBtn">@Localizer["Lobby_NextTopic"]</button>
             </div>
 
             <div class="live-chat" id="liveChat">
@@ -61,6 +80,10 @@
             </div>
 
             <div class="control-stack">
+                <div class="control-row mb-2" id="socialActions" hidden>
+                    <button id="friendBtn" class="btn btn-soft" type="button" @(isGuest ? "disabled" : null)>@Localizer["Lobby_AddFriend"]</button>
+                    <button id="blockBtn" class="btn btn-soft danger" type="button" @(isGuest ? "disabled" : null)>@Localizer["Lobby_Block"]</button>
+                </div>
                 <button id="nextBtn" class="btn btn-next" type="button">@Localizer["Lobby_Next"]</button>
                 <div class="control-row">
                     <button id="reportBtn" class="btn btn-soft btn-report" type="button" disabled>
@@ -104,6 +127,26 @@
     </div>
 </div>
 
+<div class="modal fade report-modal" id="ratingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content report-modal-content">
+            <div class="modal-header report-modal-header">
+                <h2 class="modal-title fs-5">@Localizer["Lobby_RateTitle"]</h2>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body report-modal-body text-center">
+                <p class="text-muted">@Localizer["Lobby_RateLead"]</p>
+                <div class="rating-stars" id="ratingStars">
+                    @for (var i = 1; i <= 5; i++)
+                    {
+                        <button type="button" class="btn btn-soft rating-star" data-rating="@i">@i★</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade report-modal media-gate-modal" id="mediaPermissionModal"
      tabindex="-1" aria-labelledby="mediaPermissionModalLabel" aria-hidden="true"
      data-bs-backdrop="static" data-bs-keyboard="false">
@@ -136,6 +179,23 @@
             userId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(userId)),
             guestSessionId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(guestSessionId?.ToString())),
             autoStart: @Html.Raw(autoStart ? "true" : "false"),
+            isGuest: @Html.Raw(isGuest ? "true" : "false"),
+            isPremium: @Html.Raw(ViewBag.IsPremium == true ? "true" : "false"),
+            browserNotifications: @Html.Raw(ViewBag.BrowserNotifications == true ? "true" : "false"),
+            languageLevel: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LanguageLevel)),
+            gender: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Gender)),
+            preferredPartnerGender: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PreferredPartnerGender)),
+            interests: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(interests)),
+            preferSimilarLevel: @Html.Raw(ViewBag.PreferSimilarLevel == true ? "true" : "false"),
+            preferSharedInterests: @Html.Raw(ViewBag.PreferSharedInterests == true ? "true" : "false"),
+            blockedUserIds: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(blocked)),
+            rematchWithUserId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RematchWithUserId as string)),
+            topics: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(topics)),
+            iceServers: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(iceServers.Select(s => new {
+                urls = s.Urls,
+                username = s.Username,
+                credential = s.Credential
+            }))),
             i18n: {
                 ready: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Ready"].Value)),
                 connected: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Connected"].Value)),
@@ -172,7 +232,11 @@
                 toastReportEnded: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_ReportEnded"].Value)),
                 toastCallEndedModeration: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_CallEndedModeration"].Value)),
                 toastYouBanned: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Toast_YouBanned"].Value)),
-                toastBackToLobby: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_BackToLobbyToast"].Value))
+                toastBackToLobby: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_BackToLobbyToast"].Value)),
+                toastFriendSent: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_FriendSent"].Value)),
+                toastBlocked: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Blocked"].Value)),
+                toastRated: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Rated"].Value)),
+                queueEta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_QueueEta"].Value))
             }
         };
     </script>
