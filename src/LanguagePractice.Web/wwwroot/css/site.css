@@ -1582,6 +1582,14 @@ html[dir="rtl"] .lt-toast-root {
   max-width: min(520px, calc(100% - 1.5rem));
 }
 
+.media-gate-footer {
+  grid-template-columns: 1fr 1.4fr;
+}
+
+.media-gate-steps {
+  line-height: 1.55;
+}
+
 .report-modal-content {
   background: #151d2f;
   color: #f3f6ff;

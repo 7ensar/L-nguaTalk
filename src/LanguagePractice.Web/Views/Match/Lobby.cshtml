@@ -99,6 +99,28 @@
     </div>
 </div>
 
+<div class="modal fade report-modal media-gate-modal" id="mediaPermissionModal"
+     tabindex="-1" aria-labelledby="mediaPermissionModalLabel" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable report-modal-dialog">
+        <div class="modal-content report-modal-content">
+            <div class="modal-header report-modal-header">
+                <h2 class="modal-title fs-5" id="mediaPermissionModalLabel">@Localizer["Lobby_MediaGate_Title"]</h2>
+            </div>
+            <div class="modal-body report-modal-body">
+                <p class="mb-3">@Localizer["Lobby_MediaGate_Lead"]</p>
+                <p class="text-muted small media-gate-steps mb-3" id="mediaPermissionSteps"
+                   style="white-space: pre-line;">@Localizer["Lobby_MediaGate_Steps"]</p>
+                <p class="small text-warning mb-0" id="mediaPermissionHint" hidden></p>
+            </div>
+            <div class="modal-footer report-modal-footer media-gate-footer">
+                <button type="button" class="btn btn-soft" id="mediaPermissionCancelBtn">@Localizer["Lobby_MediaGate_Cancel"]</button>
+                <button type="button" class="btn btn-next" id="mediaPermissionEnableBtn">@Localizer["Lobby_MediaGate_Enable"]</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
     <script>
@@ -118,6 +140,7 @@
                 peerLeft: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_PeerLeft"].Value)),
                 queued: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Queued"].Value)),
                 mediaRequired: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_MediaRequired"].Value)),
+                mediaGateStillBlocked: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_MediaGate_StillBlocked"].Value)),
                 next: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_Status_Next"].Value)),
                 chatIdle: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_ChatIdle"].Value)),
                 chatWith: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Lobby_ChatWith"].Value)),

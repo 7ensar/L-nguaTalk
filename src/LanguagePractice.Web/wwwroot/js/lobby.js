@@ -16,6 +16,10 @@
   const backToLobbyBtn = document.getElementById("backToLobbyBtn");
   const reportForm = document.getElementById("reportForm");
   const reportModalEl = document.getElementById("reportModal");
+  const mediaPermissionModalEl = document.getElementById("mediaPermissionModal");
+  const mediaPermissionEnableBtn = document.getElementById("mediaPermissionEnableBtn");
+  const mediaPermissionCancelBtn = document.getElementById("mediaPermissionCancelBtn");
+  const mediaPermissionHint = document.getElementById("mediaPermissionHint");
   const localVideo = document.getElementById("localVideo");
   const remoteVideo = document.getElementById("remoteVideo");
   const videoEmpty = document.getElementById("videoEmpty");
@@ -37,10 +41,18 @@
   let isOfferer = false;
   let busy = false;
   let suppressAutoRequeue = false;
+  let mediaGateOpen = false;
+  let resumeJoinAfterMedia = false;
   /** @type {RTCIceCandidateInit[]} */
   let pendingRemoteIce = [];
   const reportModal = reportModalEl && window.bootstrap
     ? bootstrap.Modal.getOrCreateInstance(reportModalEl)
+    : null;
+  const mediaPermissionModal = mediaPermissionModalEl && window.bootstrap
+    ? bootstrap.Modal.getOrCreateInstance(mediaPermissionModalEl, {
+        backdrop: "static",
+        keyboard: false
+      })
     : null;
 
   function getSelectedLanguage() {
@@ -98,19 +110,109 @@
   }
 
   function setControls({ queued, matched }) {
-    if (joinBtn) joinBtn.disabled = !!queued || !!matched || busy;
-    if (leaveBtn) leaveBtn.disabled = !(queued || matched);
-    if (nextBtn) nextBtn.disabled = busy;
-    if (reportBtn) reportBtn.disabled = !matched;
+    const blocked = mediaGateOpen || busy;
+    if (joinBtn) joinBtn.disabled = !!queued || !!matched || blocked;
+    if (leaveBtn) leaveBtn.disabled = !(queued || matched) || mediaGateOpen;
+    if (nextBtn) nextBtn.disabled = blocked;
+    if (reportBtn) reportBtn.disabled = !matched || mediaGateOpen;
     if (backToLobbyBtn) backToLobbyBtn.hidden = !(queued || matched);
-    setChatEnabled(!!matched);
+    setChatEnabled(!!matched && !mediaGateOpen);
   }
 
-  async function ensureMedia() {
-    if (localStream) return localStream;
+  function hasLiveMedia() {
+    return !!localStream
+      && localStream.getTracks().some((track) => track.readyState === "live");
+  }
+
+  function isMediaPermissionError(err) {
+    const name = String(err?.name || "");
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") return true;
+    const msg = String(err?.message || err || "").toLowerCase();
+    return msg.includes("permission")
+      || msg.includes("notallowed")
+      || msg.includes("denied")
+      || msg.includes("not allowed");
+  }
+
+  function stopLocalStream() {
+    if (!localStream) return;
+    localStream.getTracks().forEach((track) => {
+      try {
+        track.onended = null;
+        track.stop();
+      } catch (_) {
+        /* ignore */
+      }
+    });
+    localStream = null;
+    if (localVideo) localVideo.srcObject = null;
+  }
+
+  function watchLocalTracks() {
+    if (!localStream) return;
+    localStream.getTracks().forEach((track) => {
+      track.onended = () => {
+        if (!hasLiveMedia() && (inQueue || currentRoomId)) {
+          handleMediaLost();
+        }
+      };
+    });
+  }
+
+  function setMediaHint(message) {
+    if (!mediaPermissionHint) return;
+    if (message) {
+      mediaPermissionHint.hidden = false;
+      mediaPermissionHint.textContent = message;
+    } else {
+      mediaPermissionHint.hidden = true;
+      mediaPermissionHint.textContent = "";
+    }
+  }
+
+  function showMediaPermissionGate({ resumeJoin = false } = {}) {
+    resumeJoinAfterMedia = !!resumeJoin;
+    mediaGateOpen = true;
+    setMediaHint("");
+    setStatus(t.mediaRequired || "Camera/microphone permission is required.");
+    setControls({ queued: false, matched: false });
+    if (mediaPermissionModal) {
+      mediaPermissionModal.show();
+    } else {
+      toast.error(t.mediaRequired || "Camera/microphone permission is required.");
+    }
+  }
+
+  function hideMediaPermissionGate() {
+    mediaGateOpen = false;
+    resumeJoinAfterMedia = false;
+    setMediaHint("");
+    mediaPermissionModal?.hide();
+  }
+
+  function handleMediaLost() {
+    const wasActive = inQueue || !!currentRoomId;
+    if (socket?.connected) {
+      socket.emit("queue:leave");
+      if (currentRoomId) {
+        socket.emit("room:leave", { roomId: currentRoomId });
+      }
+    }
+    leaveCurrentRoom({ notifyServer: false });
+    inQueue = false;
+    stopLocalStream();
+    showMediaPermissionGate({ resumeJoin: wasActive });
+  }
+
+  async function ensureMedia({ force = false } = {}) {
+    if (!force && hasLiveMedia()) return localStream;
 
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error("MEDIA_UNSUPPORTED");
+    }
+
+    if (localStream) {
+      stopLocalStream();
     }
 
     localStream = await navigator.mediaDevices.getUserMedia({
@@ -124,6 +226,8 @@
         noiseSuppression: true
       }
     });
+
+    watchLocalTracks();
 
     if (localVideo) {
       localVideo.srcObject = localStream;
@@ -300,6 +404,14 @@
 
       socket.on("match:found", async (payload) => {
         try {
+          if (mediaGateOpen || !hasLiveMedia()) {
+            if (socket?.connected && payload?.roomId) {
+              socket.emit("room:leave", { roomId: payload.roomId });
+            }
+            showMediaPermissionGate({ resumeJoin: true });
+            return;
+          }
+
           suppressAutoRequeue = false;
           currentRoomId = payload.roomId;
           peerName = payload.peerName;
@@ -326,6 +438,10 @@
           }
         } catch (err) {
           console.error(err);
+          if (isMediaPermissionError(err)) {
+            handleMediaLost();
+            return;
+          }
           toast.error(t.toastMatchError || "Could not start the call.");
         }
       });
@@ -333,6 +449,7 @@
       socket.on("webrtc:offer", async ({ sdp, roomId }) => {
         try {
           if (roomId && currentRoomId && roomId !== currentRoomId) return;
+          if (mediaGateOpen) return;
           if (!pc) {
             await ensureMedia();
             createPeerConnection();
@@ -347,6 +464,10 @@
           });
         } catch (err) {
           console.error(err);
+          if (isMediaPermissionError(err)) {
+            handleMediaLost();
+            return;
+          }
           toast.error(t.toastSignalError || "Signaling error during offer.");
         }
       });
@@ -425,7 +546,7 @@
   }
 
   async function joinQueue({ fromPeerLeft = false } = {}) {
-    if (busy) return;
+    if (busy || mediaGateOpen) return;
     busy = true;
     setControls({ queued: true, matched: false });
 
@@ -459,9 +580,8 @@
       if (err?.message === "MEDIA_UNSUPPORTED") {
         toast.error(t.toastMediaUnsupported || "Camera/microphone is not supported.");
         setStatus(t.toastMediaUnsupported || "Media unsupported.");
-      } else if (String(err?.message || err).toLowerCase().includes("permission")) {
-        toast.error(t.mediaRequired || "Camera/microphone permission is required.");
-        setStatus(t.mediaRequired || "Camera/microphone permission is required.");
+      } else if (isMediaPermissionError(err)) {
+        showMediaPermissionGate({ resumeJoin: true });
       } else if (err?.message === "SOCKET_IO_MISSING") {
         toast.error(t.toastSocketMissing || "Socket.io failed to load.");
       } else {
@@ -475,7 +595,7 @@
   }
 
   async function skipNext({ silent = false } = {}) {
-    if (busy) return;
+    if (busy || mediaGateOpen) return;
 
     if (!silent) {
       setStatus(t.next || "Skipping to next partner...");
@@ -563,19 +683,65 @@
     }
   }
 
+  mediaPermissionEnableBtn?.addEventListener("click", () => {
+    if (busy) return;
+    busy = true;
+    if (mediaPermissionEnableBtn) mediaPermissionEnableBtn.disabled = true;
+    setMediaHint("");
+
+    void (async () => {
+      try {
+        await ensureMedia({ force: true });
+        const shouldResume = resumeJoinAfterMedia;
+        hideMediaPermissionGate();
+        setControls({ queued: false, matched: false });
+        if (shouldResume) {
+          await joinQueue({ fromPeerLeft: true });
+        } else {
+          setStatus(t.ready || "Ready.");
+        }
+      } catch (err) {
+        console.error(err);
+        if (err?.message === "MEDIA_UNSUPPORTED") {
+          setMediaHint(t.toastMediaUnsupported || "Camera/microphone is not supported.");
+        } else {
+          setMediaHint(
+            t.mediaGateStillBlocked
+            || "Permission is still blocked. Enable microphone and camera in your browser settings, then try again."
+          );
+        }
+        setStatus(t.mediaRequired || "Camera/microphone permission is required.");
+      } finally {
+        busy = false;
+        if (mediaPermissionEnableBtn) mediaPermissionEnableBtn.disabled = false;
+      }
+    })();
+  });
+
+  mediaPermissionCancelBtn?.addEventListener("click", () => {
+    hideMediaPermissionGate();
+    inQueue = false;
+    setControls({ queued: false, matched: false });
+    setStatus(t.ready || "Ready.");
+  });
+
   joinBtn?.addEventListener("click", () => {
+    if (mediaGateOpen) return;
     void joinQueue().catch(() => {});
   });
 
   nextBtn?.addEventListener("click", () => {
+    if (mediaGateOpen) return;
     void skipNext().catch(() => {});
   });
 
   leaveBtn?.addEventListener("click", () => {
+    if (mediaGateOpen) return;
     leaveQueueAndCall();
   });
 
   backToLobbyBtn?.addEventListener("click", () => {
+    if (mediaGateOpen) return;
     leaveQueueAndCall();
     setStatus(t.ready || "Ready.");
     toast.info(t.toastBackToLobby || t.toastLeft || "Back to lobby.");
@@ -583,6 +749,7 @@
   });
 
   reportBtn?.addEventListener("click", () => {
+    if (mediaGateOpen) return;
     if (!currentRoomId) {
       toast.warn(t.toastReportNoPeer || "No active peer to report.");
       return;
