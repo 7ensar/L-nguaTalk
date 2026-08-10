@@ -1,0 +1,126 @@
+@model List<LanguagePractice.Core.Entities.ConversationTopic>
+@{
+    ViewData["Title"] = "Konuşma Konuları";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Konuşma konuları</h1>
+        <p class="text-muted mb-0 small">Lobide eşleşme sırasında gösterilen sohbet başlatıcıları. Dil kodu <code>*</code> = tüm diller.</p>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success border-0">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger border-0">@err</div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="panel-card">
+            <h2 class="h6 mb-3">Yeni konu ekle</h2>
+            <form asp-action="Create" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+                <div class="col-md-2">
+                    <label class="form-label" for="LanguageCode">Dil kodu</label>
+                    <input class="form-control" id="LanguageCode" name="LanguageCode" maxlength="10" value="*" placeholder="* / en / tr" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label" for="TextEn">İngilizce</label>
+                    <input class="form-control" id="TextEn" name="TextEn" maxlength="300" required placeholder="Conversation starter (EN)" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label" for="TextTr">Türkçe</label>
+                    <input class="form-control" id="TextTr" name="TextTr" maxlength="300" required placeholder="Konuşma konusu (TR)" />
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive panel-card p-0">
+    <table class="table table-hover align-middle mb-0 admin-table">
+        <thead>
+            <tr>
+                <th style="width:4rem;">#</th>
+                <th style="width:5rem;">Dil</th>
+                <th>EN</th>
+                <th>TR</th>
+                <th>Durum</th>
+                <th class="text-end">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Count == 0)
+        {
+            <tr><td colspan="6" class="text-muted p-3">Henüz konu yok.</td></tr>
+        }
+        else
+        {
+            foreach (var topic in Model)
+            {
+                <tr>
+                    <td colspan="6" class="p-3">
+                        <form asp-action="Update" method="post" class="row g-2 align-items-end">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@topic.Id" />
+                            <div class="col-6 col-md-1">
+                                <label class="form-label small text-muted mb-1">Sıra</label>
+                                <input class="form-control form-control-sm" name="SortOrder" type="number" value="@topic.SortOrder" />
+                            </div>
+                            <div class="col-6 col-md-1">
+                                <label class="form-label small text-muted mb-1">Dil</label>
+                                <input class="form-control form-control-sm" name="LanguageCode" maxlength="10" value="@topic.LanguageCode" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted mb-1">EN</label>
+                                <input class="form-control form-control-sm" name="TextEn" maxlength="300" required value="@topic.TextEn" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted mb-1">TR</label>
+                                <input class="form-control form-control-sm" name="TextTr" maxlength="300" required value="@topic.TextTr" />
+                            </div>
+                            <div class="col-md-1">
+                                @if (topic.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Pasif</span>
+                                }
+                            </div>
+                            <div class="col-md-3 text-md-end">
+                                <div class="d-inline-flex flex-wrap gap-1">
+                                    <button type="submit" class="btn btn-sm btn-primary">Kaydet</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            <form asp-action="Toggle" method="post" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@topic.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    @(topic.IsActive ? "Pasifleştir" : "Aktifleştir")
+                                </button>
+                            </form>
+                            <form asp-action="Delete" method="post" class="m-0" onsubmit="return confirm('Bu konuyu silmek istiyor musun?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@topic.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>

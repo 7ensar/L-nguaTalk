@@ -1,3 +1,4 @@
+using System.Globalization;
 using LanguagePractice.Core.Entities;
 using LanguagePractice.Core.Interfaces;
 using LanguagePractice.Infrastructure.Data;
@@ -172,13 +173,24 @@ public class MatchController : Controller
     {
         try
         {
+            var ui = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant();
             var rows = await _db.ConversationTopics.AsNoTracking()
-                .Where(x => x.IsActive)
+                .Where(x => x.IsActive && (x.LanguageCode == "*" || x.LanguageCode == ui))
                 .OrderBy(x => x.SortOrder)
-                .Take(20)
-                .Select(x => x.TextEn)
+                .ThenBy(x => x.Id)
+                .Take(40)
+                .Select(x => new { x.TextEn, x.TextTr })
                 .ToListAsync(cancellationToken);
-            return rows.Count > 0 ? rows : FallbackTopics;
+
+            var texts = rows
+                .Select(x => ui == "tr"
+                    ? (string.IsNullOrWhiteSpace(x.TextTr) ? x.TextEn : x.TextTr)
+                    : (string.IsNullOrWhiteSpace(x.TextEn) ? x.TextTr : x.TextEn))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToList();
+
+            return texts.Count > 0 ? texts : FallbackTopics;
         }
         catch (Exception ex)
         {
