@@ -14,6 +14,14 @@
             aria-controls="languageMenuPanel"
             aria-haspopup="true"
             aria-label="@Localizer["Lang_Change"]">
+        <span class="lang-globe" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18" />
+                <path d="M12 3a14 14 0 0 1 0 18" />
+                <path d="M12 3a14 14 0 0 0 0 18" />
+            </svg>
+        </span>
         <img class="lang-switcher-flag"
              src="@LanguageDisplay.FlagImageUrl(currentLang, 40)"
              width="20"
@@ -27,7 +35,17 @@
     </button>
 
     <div class="language-menu" id="languageMenuPanel" role="menu" hidden>
-        <div class="language-menu-label">@Localizer["Lang_Label"]</div>
+        <div class="language-menu-label">
+            <span class="lang-globe lang-globe-sm" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M3 12h18" />
+                    <path d="M12 3a14 14 0 0 1 0 18" />
+                    <path d="M12 3a14 14 0 0 0 0 18" />
+                </svg>
+            </span>
+            @Localizer["Lang_Label"]
+        </div>
         <div class="language-menu-list">
             @foreach (var culture in Model.Cultures)
             {
