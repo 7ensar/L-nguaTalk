@@ -1,20 +1,20 @@
-@using LanguagePractice.Infrastructure.Services
+@model LanguagePractice.Web.Models.LobbyPageModel
 @using LanguagePractice.Web.Localization
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
 @{
     ViewData["Title"] = Localizer["Lobby_Title"].Value;
     ViewData["HideFooter"] = true;
-    var signalingUrl = (string)(ViewBag.SignalingUrl ?? "http://localhost:5050");
-    var displayName = (string)(ViewBag.DisplayName ?? "Guest");
-    var isGuest = (bool)(ViewBag.IsGuest ?? true);
-    var languageCode = (string)(ViewBag.LanguageCode ?? "en");
-    var autoStart = (bool)(ViewBag.AutoStart ?? false);
-    var userId = ViewBag.UserId as string;
-    var guestSessionId = ViewBag.GuestSessionId as Guid?;
-    var iceServers = ViewBag.IceServers as List<IceServerOptions> ?? new List<IceServerOptions>();
-    var topics = ViewBag.Topics as List<string> ?? new List<string>();
-    var interests = ViewBag.Interests as string[] ?? Array.Empty<string>();
-    var blocked = ViewBag.BlockedUserIds as IReadOnlyList<string> ?? Array.Empty<string>();
+    var signalingUrl = Model.SignalingUrl;
+    var displayName = Model.DisplayName;
+    var isGuest = Model.IsGuest;
+    var languageCode = Model.LanguageCode;
+    var autoStart = Model.AutoStart;
+    var userId = Model.UserId;
+    var guestSessionId = Model.GuestSessionId;
+    var iceServers = Model.IceServers;
+    var topics = Model.Topics;
+    var interests = Model.Interests;
+    var blocked = Model.BlockedUserIds;
 }
 
 <div class="lobby-page">
@@ -25,7 +25,7 @@
                 @Localizer["Lobby_Hello"] <strong style="color:var(--text)">@displayName</strong>
                 @(isGuest ? Localizer["Lobby_GuestTag"].Value : "")
                 <span class="ms-1">· @languageCode.ToUpperInvariant()</span>
-                @if (ViewBag.IsPremium == true)
+                @if (Model.IsPremium)
                 {
                     <span class="badge text-bg-warning ms-1">@Localizer["Lobby_Premium"]</span>
                 }
@@ -180,19 +180,19 @@
             guestSessionId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(guestSessionId?.ToString())),
             autoStart: @Html.Raw(autoStart ? "true" : "false"),
             isGuest: @Html.Raw(isGuest ? "true" : "false"),
-            isPremium: @Html.Raw(ViewBag.IsPremium == true ? "true" : "false"),
-            browserNotifications: @Html.Raw(ViewBag.BrowserNotifications == true ? "true" : "false"),
-            languageLevel: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LanguageLevel)),
-            gender: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Gender)),
-            preferredPartnerGender: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PreferredPartnerGender)),
+            isPremium: @Html.Raw(Model.IsPremium ? "true" : "false"),
+            browserNotifications: @Html.Raw(Model.BrowserNotifications ? "true" : "false"),
+            languageLevel: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LanguageLevel)),
+            gender: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Gender)),
+            preferredPartnerGender: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PreferredPartnerGender)),
             interests: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(interests)),
-            preferSimilarLevel: @Html.Raw(ViewBag.PreferSimilarLevel == true ? "true" : "false"),
-            preferSharedInterests: @Html.Raw(ViewBag.PreferSharedInterests == true ? "true" : "false"),
+            preferSimilarLevel: @Html.Raw(Model.PreferSimilarLevel ? "true" : "false"),
+            preferSharedInterests: @Html.Raw(Model.PreferSharedInterests ? "true" : "false"),
             blockedUserIds: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(blocked)),
-            rematchWithUserId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.RematchWithUserId as string)),
+            rematchWithUserId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RematchWithUserId)),
             topics: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(topics)),
             iceServers: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(iceServers.Select(s => new {
-                urls = s.Urls,
+                urls = s.Urls ?? new List<string>(),
                 username = s.Username,
                 credential = s.Credential
             }))),

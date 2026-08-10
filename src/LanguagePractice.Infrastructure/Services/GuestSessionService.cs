@@ -25,7 +25,11 @@ public class GuestSessionService : IGuestSessionService
         {
             DisplayName = displayName.Trim(),
             PreferredLanguageCode = preferredLanguageCode,
-            SessionToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
+            // Cookie'de + / karakterleri bozulmasın diye URL-safe Base64
+            SessionToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_'),
             ExpiresAtUtc = DateTime.UtcNow.Add(lifetime)
         };
 

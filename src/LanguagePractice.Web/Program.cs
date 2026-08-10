@@ -89,7 +89,16 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await db.Database.MigrateAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    try
+    {
+        await db.Database.MigrateAsync();
+        logger.LogInformation("Database migrations applied.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database MigrateAsync failed. App will start but some features may error.");
+    }
 }
 
 await IdentityDataSeeder.SeedAsync(app.Services);
