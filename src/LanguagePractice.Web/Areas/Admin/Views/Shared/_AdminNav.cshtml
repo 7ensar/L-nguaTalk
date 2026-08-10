@@ -1,0 +1,21 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+<nav class="admin-nav flex-grow-1 p-2">
+    <a class="admin-nav-link @(controller == "Dashboard" ? "active" : null)"
+       asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+    <a class="admin-nav-link @(controller == "Users" ? "active" : null)"
+       asp-area="Admin" asp-controller="Users" asp-action="Index">Kullanıcılar</a>
+    <a class="admin-nav-link @(controller is "Moderation" or "Reports" ? "active" : null)"
+       asp-area="Admin" asp-controller="Moderation" asp-action="Index">Raporlar ve Banlılar</a>
+    <a class="admin-nav-link @(controller == "Interests" ? "active" : null)"
+       asp-area="Admin" asp-controller="Interests" asp-action="Index">İlgi Etiketleri</a>
+    <a class="admin-nav-link @(controller == "System" ? "active" : null)"
+       asp-area="Admin" asp-controller="System" asp-action="Index">Sistem</a>
+</nav>
+<div class="p-3 border-top border-secondary-subtle">
+    <a class="btn btn-outline-light btn-sm w-100 mb-2" asp-area="" asp-controller="Home" asp-action="Index">Siteye Dön</a>
+    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+        <button type="submit" class="btn btn-light btn-sm w-100">Çıkış</button>
+    </form>
+</div>

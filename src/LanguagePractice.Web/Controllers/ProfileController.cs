@@ -214,7 +214,7 @@ public class ProfileController : Controller
         return languages.Select(l => new SelectListItem
         {
             Value = l.Code,
-            Text = $"{LanguageDisplay.Flag(l.Code)} {l.Name} ({l.NativeName})"
+            Text = $"{l.Name} ({l.NativeName})"
         });
     }
 

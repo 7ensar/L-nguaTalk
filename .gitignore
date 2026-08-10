@@ -11,7 +11,8 @@ obj/
 node_modules/
 npm-debug.log*
 .env
-dist/
+# Do not ignore wwwroot/lib/**/dist (Bootstrap/jQuery vendor assets)
+src/signaling-service/dist/
 
 # IDE / OS
 .idea/

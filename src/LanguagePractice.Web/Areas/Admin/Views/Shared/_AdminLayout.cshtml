@@ -5,16 +5,27 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · Admin · LinguaTalk</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
 </head>
 <body class="admin-body">
     <div class="admin-shell">
-        <aside class="admin-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="adminSidebar">
-            <div class="offcanvas-header d-lg-none border-bottom border-secondary-subtle">
-                <h5 class="offcanvas-title text-white">Admin</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#adminSidebar" aria-label="Kapat"></button>
+        <aside class="admin-sidebar d-none d-lg-flex flex-column">
+            <div class="admin-brand px-3 py-3 border-bottom border-secondary-subtle">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-decoration-none text-white fw-semibold d-inline-flex align-items-center gap-2">
+                    <span class="lt-logo-mark" style="width:32px;height:32px;font-size:.85rem;">L</span>
+                    LinguaTalk Admin
+                </a>
+                <div class="small text-white-50 mt-1">Yönetim paneli</div>
+            </div>
+            <partial name="_AdminNav" />
+        </aside>
+
+        <div class="offcanvas offcanvas-start admin-offcanvas d-lg-none" tabindex="-1" id="adminSidebar" aria-labelledby="adminSidebarLabel">
+            <div class="offcanvas-header border-bottom border-secondary-subtle">
+                <h5 class="offcanvas-title text-white" id="adminSidebarLabel">Admin</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
             </div>
             <div class="offcanvas-body d-flex flex-column p-0">
                 <div class="admin-brand px-3 py-3 border-bottom border-secondary-subtle">
@@ -22,28 +33,10 @@
                         <span class="lt-logo-mark" style="width:32px;height:32px;font-size:.85rem;">L</span>
                         LinguaTalk Admin
                     </a>
-                    <div class="small text-white-50 mt-1">Yönetim paneli</div>
                 </div>
-                <nav class="admin-nav flex-grow-1 p-2">
-                    <a class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")"
-                       asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
-                    <a class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")"
-                       asp-area="Admin" asp-controller="Users" asp-action="Index">Kullanıcılar</a>
-                    <a class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() is "Moderation" or "Reports" ? "active" : "")"
-                       asp-area="Admin" asp-controller="Moderation" asp-action="Index">Raporlar ve Banlılar</a>
-                    <a class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Interests" ? "active" : "")"
-                       asp-area="Admin" asp-controller="Interests" asp-action="Index">İlgi Etiketleri</a>
-                    <a class="admin-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "System" ? "active" : "")"
-                       asp-area="Admin" asp-controller="System" asp-action="Index">Sistem</a>
-                </nav>
-                <div class="p-3 border-top border-secondary-subtle">
-                    <a class="btn btn-outline-light btn-sm w-100 mb-2" asp-area="" asp-controller="Home" asp-action="Index">Siteye Dön</a>
-                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-                        <button type="submit" class="btn btn-light btn-sm w-100">Çıkış</button>
-                    </form>
-                </div>
+                <partial name="_AdminNav" />
             </div>
-        </aside>
+        </div>
 
         <div class="admin-main">
             <header class="admin-topbar d-flex align-items-center justify-content-between gap-2 px-3 px-md-4">
@@ -57,7 +50,7 @@
                         <div class="small text-muted d-none d-sm-block">Sadece @AppRoles.Admin rolü erişebilir</div>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
                     @await Component.InvokeAsync("LanguageSwitcher")
                     <div class="small text-muted text-truncate d-none d-md-block">@User.Identity?.Name</div>
                 </div>
@@ -83,8 +76,8 @@
         </div>
     </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

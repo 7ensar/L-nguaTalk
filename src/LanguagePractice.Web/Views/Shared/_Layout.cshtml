@@ -16,7 +16,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>@ViewData["Title"] · LinguaTalk</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -41,7 +41,7 @@
                                 aria-haspopup="true"
                                 aria-label="@Localizer["Nav_Profile"]">
                             <span class="profile-avatar">@initial</span>
-                            <span class="d-none d-sm-inline text-truncate profile-name">@display</span>
+                            <span class="d-none d-sm-inline text-truncate profile-toggle-name">@display</span>
                             <span class="language-caret" aria-hidden="true"></span>
                         </button>
                         <div class="profile-menu" id="profileMenuPanel" role="menu" hidden>
@@ -82,8 +82,8 @@
         </footer>
     }
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/lang-tiles.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

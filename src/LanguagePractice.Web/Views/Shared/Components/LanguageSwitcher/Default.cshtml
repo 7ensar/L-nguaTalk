@@ -1,6 +1,10 @@
 @model LanguagePractice.Web.ViewComponents.LanguageSwitcherModel
+@using LanguagePractice.Web.Helpers
 @using LanguagePractice.Web.Localization
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@{
+    var currentLang = Model.CurrentCode.Split('-')[0];
+}
 
 <div class="language-switcher" data-lang-switcher>
     <button class="glass-btn language-switcher-btn"
@@ -10,7 +14,14 @@
             aria-controls="languageMenuPanel"
             aria-haspopup="true"
             aria-label="@Localizer["Lang_Change"]">
-        <span class="lang-code text-uppercase">@Model.CurrentCode.Split('-')[0]</span>
+        <img class="lang-switcher-flag"
+             src="@LanguageDisplay.FlagImageUrl(currentLang, 40)"
+             width="20"
+             height="15"
+             alt=""
+             loading="lazy"
+             decoding="async" />
+        <span class="lang-code text-uppercase">@currentLang</span>
         <span class="d-none d-md-inline text-truncate lang-native">@Model.Current.NativeName</span>
         <span class="language-caret" aria-hidden="true"></span>
     </button>
@@ -20,6 +31,7 @@
         <div class="language-menu-list">
             @foreach (var culture in Model.Cultures)
             {
+                var lang = culture.Code.Split('-')[0];
                 <form asp-controller="Culture" asp-action="Set" method="post" class="m-0" role="none">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="culture" value="@culture.Code" />
@@ -27,8 +39,17 @@
                     <button type="submit"
                             role="menuitem"
                             class="language-item @(culture.Code == Model.CurrentCode ? "active" : null)">
-                        <span class="fw-semibold">@culture.NativeName</span>
-                        <span class="small d-block">@culture.EnglishName</span>
+                        <img class="lang-switcher-flag"
+                             src="@LanguageDisplay.FlagImageUrl(lang, 40)"
+                             width="20"
+                             height="15"
+                             alt=""
+                             loading="lazy"
+                             decoding="async" />
+                        <span class="language-item-text">
+                            <span class="fw-semibold">@culture.NativeName</span>
+                            <span class="small d-block">@culture.EnglishName</span>
+                        </span>
                     </button>
                 </form>
             }

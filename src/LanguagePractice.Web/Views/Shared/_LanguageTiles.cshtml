@@ -23,7 +23,13 @@
                 aria-selected="@(isSelected ? "true" : "false")"
                 data-lang="@lang.Code"
                 data-lang-tile>
-            <span class="lang-tile-flag">@LanguageDisplay.Flag(lang.Code)</span>
+            <img class="lang-tile-flag"
+                 src="@LanguageDisplay.FlagImageUrl(lang.Code, 40)"
+                 width="28"
+                 height="21"
+                 alt=""
+                 loading="lazy"
+                 decoding="async" />
             <span class="lang-tile-meta">
                 <span class="lang-tile-name">@lang.Name</span>
                 <span class="lang-tile-count">

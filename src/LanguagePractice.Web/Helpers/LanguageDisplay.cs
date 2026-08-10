@@ -4,28 +4,28 @@ public sealed record PracticeLanguage(string Code, string Name);
 
 public static class LanguageDisplay
 {
-    private static readonly IReadOnlyDictionary<string, string> Flags = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly IReadOnlyDictionary<string, string> CountryCodes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
-        ["en"] = "🇬🇧",
-        ["tr"] = "🇹🇷",
-        ["de"] = "🇩🇪",
-        ["es"] = "🇪🇸",
-        ["fr"] = "🇫🇷",
-        ["it"] = "🇮🇹",
-        ["ja"] = "🇯🇵",
-        ["ko"] = "🇰🇷",
-        ["zh"] = "🇨🇳",
-        ["hi"] = "🇮🇳",
-        ["ar"] = "🇸🇦",
-        ["bn"] = "🇧🇩",
-        ["pt"] = "🇵🇹",
-        ["ru"] = "🇷🇺",
-        ["ur"] = "🇵🇰",
-        ["id"] = "🇮🇩",
-        ["sw"] = "🇰🇪",
-        ["vi"] = "🇻🇳",
-        ["pl"] = "🇵🇱",
-        ["nl"] = "🇳🇱"
+        ["en"] = "gb",
+        ["tr"] = "tr",
+        ["de"] = "de",
+        ["es"] = "es",
+        ["fr"] = "fr",
+        ["it"] = "it",
+        ["ja"] = "jp",
+        ["ko"] = "kr",
+        ["zh"] = "cn",
+        ["hi"] = "in",
+        ["ar"] = "sa",
+        ["bn"] = "bd",
+        ["pt"] = "pt",
+        ["ru"] = "ru",
+        ["ur"] = "pk",
+        ["id"] = "id",
+        ["sw"] = "ke",
+        ["vi"] = "vn",
+        ["pl"] = "pl",
+        ["nl"] = "nl"
     };
 
     /// <summary>Ana sayfa / lobi dil kutucukları.</summary>
@@ -46,14 +46,26 @@ public static class LanguageDisplay
         new("hi", "हिन्दी")
     ];
 
-    public static string Flag(string? code)
+    /// <summary>ISO 3166-1 alpha-2 country code for flag images (flagcdn).</summary>
+    public static string? CountryCode(string? languageCode)
     {
-        if (string.IsNullOrWhiteSpace(code))
+        if (string.IsNullOrWhiteSpace(languageCode))
         {
-            return "🌐";
+            return null;
         }
 
-        return Flags.TryGetValue(code.Trim(), out var flag) ? flag : "🌐";
+        return CountryCodes.TryGetValue(languageCode.Trim(), out var country) ? country : null;
+    }
+
+    public static string FlagImageUrl(string? languageCode, int width = 40)
+    {
+        var country = CountryCode(languageCode);
+        if (country is null)
+        {
+            return $"https://flagcdn.com/w{width}/un.png";
+        }
+
+        return $"https://flagcdn.com/w{width}/{country}.png";
     }
 
     public static int CountFor(IReadOnlyDictionary<string, int>? counts, string code)
