@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using LanguagePractice.Core.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace LanguagePractice.Infrastructure.Services;
@@ -13,16 +14,50 @@ public class SignalingOptions
 
 public class SignalingStatsClient : ISignalingStatsClient
 {
+    private const string CacheKey = "signaling:stats";
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(3);
+    private static readonly SemaphoreSlim FetchLock = new(1, 1);
+
     private readonly HttpClient _http;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<SignalingStatsClient> _logger;
 
-    public SignalingStatsClient(HttpClient http, ILogger<SignalingStatsClient> logger)
+    public SignalingStatsClient(
+        HttpClient http,
+        IMemoryCache cache,
+        ILogger<SignalingStatsClient> logger)
     {
         _http = http;
+        _cache = cache;
         _logger = logger;
     }
 
     public async Task<SignalingStats> GetStatsAsync(CancellationToken cancellationToken = default)
+    {
+        if (_cache.TryGetValue(CacheKey, out SignalingStats? cached) && cached is not null)
+        {
+            return cached;
+        }
+
+        await FetchLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_cache.TryGetValue(CacheKey, out cached) && cached is not null)
+            {
+                return cached;
+            }
+
+            var stats = await FetchUncachedAsync(cancellationToken);
+            _cache.Set(CacheKey, stats, CacheTtl);
+            return stats;
+        }
+        finally
+        {
+            FetchLock.Release();
+        }
+    }
+
+    private async Task<SignalingStats> FetchUncachedAsync(CancellationToken cancellationToken)
     {
         try
         {

@@ -40,9 +40,18 @@
     });
   }
 
+  let pollTimer = null;
+  let pollMs = 20000;
+  let inFlight = false;
+
   async function refreshCounts() {
+    if (document.hidden || inFlight) return;
+    inFlight = true;
     try {
-      const res = await fetch("/api/presence/online", { headers: { Accept: "application/json" } });
+      const res = await fetch("/api/presence/online", {
+        headers: { Accept: "application/json" },
+        cache: "default"
+      });
       if (!res.ok) return;
       const data = await res.json();
 
@@ -59,20 +68,53 @@
       });
     } catch (_) {
       /* ignore */
+    } finally {
+      inFlight = false;
     }
   }
 
-  function startPolling(ms = 6000) {
-    refreshCounts();
-    window.setInterval(refreshCounts, ms);
+  function scheduleNext() {
+    if (pollTimer) {
+      window.clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+    if (document.hidden) return;
+    pollTimer = window.setTimeout(async () => {
+      await refreshCounts();
+      scheduleNext();
+    }, pollMs);
   }
+
+  function startPolling(ms = 20000) {
+    pollMs = Math.max(8000, Number(ms) || 20000);
+    refreshCounts();
+    scheduleNext();
+  }
+
+  function stopPolling() {
+    if (pollTimer) {
+      window.clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      stopPolling();
+      return;
+    }
+    if (document.querySelector("[data-lang-count]")) {
+      refreshCounts();
+      scheduleNext();
+    }
+  });
 
   document.addEventListener("DOMContentLoaded", () => {
     bindTiles();
     if (document.querySelector("[data-lang-count]")) {
-      startPolling(6000);
+      startPolling(20000);
     }
   });
 
-  window.LinguaLangTiles = { bindTiles, refreshCounts, startPolling };
+  window.LinguaLangTiles = { bindTiles, refreshCounts, startPolling, stopPolling };
 })();

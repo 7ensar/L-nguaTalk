@@ -211,6 +211,23 @@ main {
   max-width: 100%;
 }
 
+.lang-switcher-flag,
+.language-item-flag {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  display: block;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14);
+  background: #1a2336;
+}
+
+.language-item-flag {
+  width: 22px;
+  height: 16px;
+}
+
 .lang-globe {
   display: inline-grid;
   place-items: center;
@@ -231,11 +248,6 @@ main {
   width: 1.2rem;
   height: 1.2rem;
   color: #9ec3ff;
-}
-
-.language-switcher.is-open .lang-globe {
-  color: #c5ddff;
-  background: linear-gradient(145deg, rgba(110, 168, 255, 0.32), rgba(139, 92, 246, 0.22));
 }
 
 .language-caret {
@@ -395,26 +407,36 @@ main {
     display: none;
   }
 
-  /* Masaüstü ile aynı dropdown görünümü */
+  .lang-native {
+    display: none;
+  }
+
+  .language-switcher-btn {
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* overflow-x:hidden body içinde absolute menü kesiliyordu → fixed */
   .language-menu {
-    position: absolute;
-    top: calc(100% + 0.4rem);
-    right: 0;
-    left: auto;
+    position: fixed;
+    top: calc(var(--header-h) + 0.35rem);
+    left: 0.65rem;
+    right: 0.65rem;
     bottom: auto;
-    width: min(92vw, 300px);
-    max-height: min(60vh, 360px);
+    width: auto;
+    max-width: none;
+    max-height: min(70vh, 420px);
     border-radius: 1rem;
-    z-index: 1100;
+    z-index: 1200;
   }
 
   .profile-menu {
-    position: absolute;
-    top: calc(100% + 0.4rem);
-    right: 0;
-    left: auto;
-    width: min(92vw, 280px);
+    position: fixed;
+    top: calc(var(--header-h) + 0.35rem);
+    left: 0.65rem;
+    right: 0.65rem;
+    width: auto;
     max-width: none;
+    z-index: 1200;
   }
 }
 
@@ -650,6 +672,7 @@ html[dir="rtl"] .profile-menu {
   object-fit: cover;
   border-radius: 3px;
   flex: 0 0 auto;
+  display: block;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
   background: #1a2336;
 }
@@ -1601,6 +1624,7 @@ html[dir="rtl"] .lt-toast-root {
   object-fit: cover;
   border-radius: 3px;
   flex: 0 0 auto;
+  display: block;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
   background: #1a2336;
 }

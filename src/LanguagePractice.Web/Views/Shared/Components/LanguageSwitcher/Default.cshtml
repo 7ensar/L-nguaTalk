@@ -1,8 +1,9 @@
 @model LanguagePractice.Web.ViewComponents.LanguageSwitcherModel
+@using LanguagePractice.Web.Helpers
 @using LanguagePractice.Web.Localization
 @inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
 @{
-    var currentLang = Model.CurrentCode.Split('-')[0];
+    var currentLang = Model.CurrentCode.Split('-', '_')[0];
 }
 
 <div class="language-switcher" data-lang-switcher>
@@ -13,34 +14,24 @@
             aria-controls="languageMenuPanel"
             aria-haspopup="true"
             aria-label="@Localizer["Lang_Change"]">
-        <span class="lang-globe" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18" />
-                <path d="M12 3a14 14 0 0 1 0 18" />
-                <path d="M12 3a14 14 0 0 0 0 18" />
-            </svg>
-        </span>
+        <img class="lang-switcher-flag"
+             src="@LanguageDisplay.FlagImageUrl(Model.CurrentCode, 40)"
+             width="20"
+             height="15"
+             alt=""
+             decoding="async"
+             referrerpolicy="no-referrer" />
         <span class="lang-code text-uppercase">@currentLang</span>
         <span class="text-truncate lang-native">@Model.Current.NativeName</span>
         <span class="language-caret" aria-hidden="true"></span>
     </button>
 
     <div class="language-menu" id="languageMenuPanel" role="menu" hidden>
-        <div class="language-menu-label">
-            <span class="lang-globe lang-globe-sm" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M3 12h18" />
-                    <path d="M12 3a14 14 0 0 1 0 18" />
-                    <path d="M12 3a14 14 0 0 0 0 18" />
-                </svg>
-            </span>
-            @Localizer["Lang_Label"]
-        </div>
+        <div class="language-menu-label">@Localizer["Lang_Label"]</div>
         <div class="language-menu-list">
             @foreach (var culture in Model.Cultures)
             {
+                var itemCode = culture.Code.Split('-', '_')[0];
                 <form asp-controller="Culture" asp-action="Set" method="post" class="m-0" role="none">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="culture" value="@culture.Code" />
@@ -48,7 +39,15 @@
                     <button type="submit"
                             role="menuitem"
                             class="language-item @(culture.Code == Model.CurrentCode ? "active" : null)">
-                        <span class="language-item-code text-uppercase">@culture.Code.Split('-')[0]</span>
+                        <img class="language-item-flag"
+                             src="@LanguageDisplay.FlagImageUrl(culture.Code, 40)"
+                             width="22"
+                             height="16"
+                             alt=""
+                             loading="lazy"
+                             decoding="async"
+                             referrerpolicy="no-referrer" />
+                        <span class="language-item-code text-uppercase">@itemCode</span>
                         <span class="language-item-text">
                             <span class="fw-semibold">@culture.NativeName</span>
                             <span class="small d-block">@culture.EnglishName</span>

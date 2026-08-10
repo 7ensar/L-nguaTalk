@@ -21,12 +21,18 @@ public class HomeController : Controller
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var signaling = await _signaling.GetStatsAsync(cancellationToken);
-        var recentUsers = await _db.Users.CountAsync(
-            x => !x.IsBanned && x.LastLoginAtUtc != null && x.LastLoginAtUtc >= DateTime.UtcNow.AddMinutes(-30),
-            cancellationToken);
-        var recentGuests = await _db.GuestSessions.CountAsync(
-            x => x.IsActive && x.ExpiresAtUtc > DateTime.UtcNow && x.LastSeenAtUtc != null && x.LastSeenAtUtc >= DateTime.UtcNow.AddMinutes(-30),
-            cancellationToken);
+        var cutoff = DateTime.UtcNow.AddMinutes(-30);
+        var recentUsers = await _db.Users
+            .AsNoTracking()
+            .CountAsync(
+                x => !x.IsBanned && x.LastLoginAtUtc != null && x.LastLoginAtUtc >= cutoff,
+                cancellationToken);
+        var recentGuests = await _db.GuestSessions
+            .AsNoTracking()
+            .CountAsync(
+                x => x.IsActive && x.ExpiresAtUtc > DateTime.UtcNow
+                     && x.LastSeenAtUtc != null && x.LastSeenAtUtc >= cutoff,
+                cancellationToken);
 
         ViewBag.OnlineCount = Math.Max(signaling.ActiveConnections, recentUsers + recentGuests);
         ViewBag.QueuedCount = signaling.QueuedTotal;

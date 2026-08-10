@@ -54,18 +54,29 @@ public static class LanguageDisplay
             return null;
         }
 
-        return CountryCodes.TryGetValue(languageCode.Trim(), out var country) ? country : null;
+        var raw = languageCode.Trim();
+        if (CountryCodes.TryGetValue(raw, out var country))
+        {
+            return country;
+        }
+
+        // zh-Hans, en-US vb. → dil öneki
+        var prefix = raw.Split('-', '_')[0];
+        return CountryCodes.TryGetValue(prefix, out country) ? country : null;
     }
 
     public static string FlagImageUrl(string? languageCode, int width = 40)
     {
-        var country = CountryCode(languageCode);
-        if (country is null)
+        // w20 / w40 / w80 desteklenir; geçersiz genişlikte kırılmayı önle
+        var w = width switch
         {
-            return $"https://flagcdn.com/w{width}/un.png";
-        }
+            <= 20 => 20,
+            <= 40 => 40,
+            _ => 80
+        };
 
-        return $"https://flagcdn.com/w{width}/{country}.png";
+        var country = CountryCode(languageCode) ?? "un";
+        return $"https://flagcdn.com/w{w}/{country}.png";
     }
 
     public static int CountFor(IReadOnlyDictionary<string, int>? counts, string code)

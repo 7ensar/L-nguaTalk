@@ -46,6 +46,7 @@
                             <span class="lang-badge native">
                                 <img class="lang-flag"
                                      src="@LanguageDisplay.FlagImageUrl(Model.NativeLanguageCode, 40)"
+                                     referrerpolicy="no-referrer"
                                      width="24"
                                      height="18"
                                      alt=""
@@ -66,7 +67,8 @@
                                      height="18"
                                      alt=""
                                      loading="lazy"
-                                     decoding="async" />
+                                     decoding="async"
+                                     referrerpolicy="no-referrer" />
                                 <span>
                                     <small>@Localizer["Profile_Learning"]</small>
                                     <strong>@(Model.TargetLanguageName ?? Model.TargetLanguageCode)</strong>

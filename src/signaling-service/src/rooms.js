@@ -1,9 +1,10 @@
 export class RoomRegistry {
-  constructor() {
+  constructor({ maxRoomAgeMs = 3 * 60 * 60_000 } = {}) {
     /** @type {Map<string, { languageCode: string, members: Set<string>, createdAt: number }>} */
     this.rooms = new Map();
     /** @type {Map<string, string>} socketId -> roomId */
     this.socketRoom = new Map();
+    this.maxRoomAgeMs = maxRoomAgeMs;
   }
 
   create(roomId, languageCode, socketIds) {
@@ -43,6 +44,31 @@ export class RoomRegistry {
     }
 
     return { roomId, remaining };
+  }
+
+  /**
+   * Çok eski veya tek kişilik bayat odaları temizler.
+   * @returns {{ roomId: string, members: string[] }[]}
+   */
+  pruneStale(now = Date.now()) {
+    /** @type {{ roomId: string, members: string[] }[]} */
+    const closed = [];
+    for (const [roomId, room] of this.rooms.entries()) {
+      const age = now - room.createdAt;
+      const aloneTooLong = room.members.size <= 1 && age > 5 * 60_000;
+      const tooOld = age > this.maxRoomAgeMs;
+      if (!aloneTooLong && !tooOld) {
+        continue;
+      }
+
+      const members = [...room.members];
+      for (const memberId of members) {
+        this.socketRoom.delete(memberId);
+      }
+      this.rooms.delete(roomId);
+      closed.push({ roomId, members });
+    }
+    return closed;
   }
 
   /** Dil bazında görüşmedeki kişi sayısı. */

@@ -22,6 +22,8 @@ public static class DependencyInjection
         var provider = DatabaseProvider.Normalize(configuration[$"{DatabaseProvider.SectionName}:Provider"]);
         var connectionString = ResolveConnectionString(configuration, provider, environment);
 
+        services.AddMemoryCache();
+
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             if (provider == DatabaseProvider.SqlServer)
@@ -30,7 +32,10 @@ public static class DependencyInjection
             }
             else if (provider == DatabaseProvider.PostgreSQL)
             {
-                options.UseNpgsql(connectionString);
+                options.UseNpgsql(connectionString, npgsql =>
+                {
+                    npgsql.CommandTimeout(30);
+                });
             }
             else
             {
@@ -104,8 +109,51 @@ public static class DependencyInjection
         {
             connectionString = EnsureSqliteAbsolutePath(connectionString, environment);
         }
+        else if (provider == DatabaseProvider.PostgreSQL)
+        {
+            connectionString = EnsureNpgsqlPoolSettings(connectionString);
+        }
 
         return connectionString;
+    }
+
+    /// <summary>
+    /// Supabase/Npgsql için makul pool ve timeout; connection string'de yoksa ekler.
+    /// </summary>
+    private static string EnsureNpgsqlPoolSettings(string connectionString)
+    {
+        static bool HasKey(string cs, string key) =>
+            cs.Contains(key + "=", StringComparison.OrdinalIgnoreCase)
+            || cs.Contains(key + " =", StringComparison.OrdinalIgnoreCase);
+
+        var extras = new List<string>();
+        if (!HasKey(connectionString, "Maximum Pool Size") && !HasKey(connectionString, "MaxPoolSize"))
+        {
+            extras.Add("Maximum Pool Size=40");
+        }
+
+        if (!HasKey(connectionString, "Timeout"))
+        {
+            extras.Add("Timeout=15");
+        }
+
+        if (!HasKey(connectionString, "Command Timeout") && !HasKey(connectionString, "CommandTimeout"))
+        {
+            extras.Add("Command Timeout=30");
+        }
+
+        if (!HasKey(connectionString, "Keepalive") && !HasKey(connectionString, "Keep Alive"))
+        {
+            extras.Add("Keepalive=30");
+        }
+
+        if (extras.Count == 0)
+        {
+            return connectionString;
+        }
+
+        var trimmed = connectionString.Trim().TrimEnd(';');
+        return trimmed + ";" + string.Join(";", extras);
     }
 
     /// <summary>

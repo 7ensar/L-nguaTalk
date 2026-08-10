@@ -95,6 +95,9 @@
     }
   }
 
+  const MAX_CHAT_BUBBLES = 80;
+  const MAX_PENDING_ICE = 40;
+
   function appendChatMessage({ text, fromName, fromSocketId, mine }) {
     if (!chatMessages) return;
     const empty = chatMessages.querySelector(".chat-empty");
@@ -107,6 +110,15 @@
       <div class="chat-bubble-text">${escapeHtml(text)}</div>
     `;
     chatMessages.appendChild(row);
+
+    const bubbles = chatMessages.querySelectorAll(".chat-bubble");
+    if (bubbles.length > MAX_CHAT_BUBBLES) {
+      const removeCount = bubbles.length - MAX_CHAT_BUBBLES;
+      for (let i = 0; i < removeCount; i += 1) {
+        bubbles[i].remove();
+      }
+    }
+
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
@@ -233,8 +245,9 @@
     localStream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "user",
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        frameRate: { ideal: 24, max: 30 }
       },
       audio: {
         echoCancellation: true,
@@ -366,11 +379,14 @@
 
       socket = io(cfg.signalingUrl, {
         transports: ["websocket", "polling"],
+        upgrade: true,
+        rememberUpgrade: true,
         withCredentials: true,
         reconnection: true,
         reconnectionAttempts: 12,
         reconnectionDelay: 1000,
-        timeout: 20000
+        reconnectionDelayMax: 8000,
+        timeout: 15000
       });
 
       const onConnect = () => {
@@ -503,6 +519,9 @@
         if (!candidate) return;
         if (roomId && currentRoomId && roomId !== currentRoomId) return;
         if (!pc || !pc.remoteDescription) {
+          if (pendingRemoteIce.length >= MAX_PENDING_ICE) {
+            pendingRemoteIce.shift();
+          }
           pendingRemoteIce.push(candidate);
           return;
         }

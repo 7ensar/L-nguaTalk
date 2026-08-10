@@ -2,8 +2,10 @@ using LanguagePractice.Core.Entities;
 using LanguagePractice.Core.Enums;
 using LanguagePractice.Core.Interfaces;
 using LanguagePractice.Infrastructure.Data;
+using LanguagePractice.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LanguagePractice.Web.Controllers.Api;
 
@@ -13,11 +15,16 @@ public class MatchesApiController : ControllerBase
 {
     private readonly IMatchHistoryRepository _matches;
     private readonly ApplicationDbContext _db;
+    private readonly ModerationOptions _moderation;
 
-    public MatchesApiController(IMatchHistoryRepository matches, ApplicationDbContext db)
+    public MatchesApiController(
+        IMatchHistoryRepository matches,
+        ApplicationDbContext db,
+        IOptions<ModerationOptions> moderation)
     {
         _matches = matches;
         _db = db;
+        _moderation = moderation.Value;
     }
 
     /// <summary>
@@ -26,6 +33,11 @@ public class MatchesApiController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMatchRequest request, CancellationToken cancellationToken)
     {
+        if (!IsAuthorizedInternal())
+        {
+            return Unauthorized();
+        }
+
         var language = await _db.Languages
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Code == request.LanguageCode, cancellationToken);
@@ -54,6 +66,11 @@ public class MatchesApiController : ControllerBase
     [HttpGet("{roomId}")]
     public async Task<IActionResult> GetByRoom(string roomId, CancellationToken cancellationToken)
     {
+        if (!IsAuthorizedInternal())
+        {
+            return Unauthorized();
+        }
+
         var match = await _matches.GetByRoomIdAsync(roomId, cancellationToken);
         return match is null ? NotFound() : Ok(match);
     }
@@ -61,6 +78,11 @@ public class MatchesApiController : ControllerBase
     [HttpPost("{roomId}/complete")]
     public async Task<IActionResult> Complete(string roomId, [FromBody] CompleteMatchRequest request, CancellationToken cancellationToken)
     {
+        if (!IsAuthorizedInternal())
+        {
+            return Unauthorized();
+        }
+
         var match = await _matches.GetByRoomIdAsync(roomId, cancellationToken);
         if (match is null)
         {
@@ -72,6 +94,19 @@ public class MatchesApiController : ControllerBase
         match.DurationSeconds = request.DurationSeconds;
         await _matches.UpdateAsync(match, cancellationToken);
         return NoContent();
+    }
+
+    private bool IsAuthorizedInternal()
+    {
+        var expected = _moderation.SignalingModerationKey;
+        if (string.IsNullOrWhiteSpace(expected))
+        {
+            return false;
+        }
+
+        var key = Request.Headers["X-Moderation-Key"].FirstOrDefault();
+        return !string.IsNullOrEmpty(key)
+               && string.Equals(key, expected, StringComparison.Ordinal);
     }
 }
 

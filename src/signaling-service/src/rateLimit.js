@@ -1,5 +1,5 @@
 /**
- * Basit bellek içi rate limiter (IP / socket bazlı).
+ * Bellek içi sliding-window rate limiter + periyodik temizlik.
  */
 export class RateLimiter {
   /**
@@ -21,12 +21,30 @@ export class RateLimiter {
     const windowStart = now - this.windowMs;
     const list = (this.hits.get(key) || []).filter((t) => t >= windowStart);
     if (list.length >= this.max) {
-      const retryAfterMs = Math.max(0, list[0] + this.windowMs - now);
-      this.hits.set(key, list);
+      const retryAfterMs = Math.max(0, (list[0] || now) + this.windowMs - now);
+      if (list.length === 0) {
+        this.hits.delete(key);
+      } else {
+        this.hits.set(key, list);
+      }
       return { allowed: false, retryAfterMs };
     }
     list.push(now);
     this.hits.set(key, list);
     return { allowed: true, retryAfterMs: 0 };
+  }
+
+  /** Süresi dolmuş anahtarları sil (bellek sızıntısını önler). */
+  prune() {
+    const now = Date.now();
+    const windowStart = now - this.windowMs;
+    for (const [key, list] of this.hits.entries()) {
+      const kept = list.filter((t) => t >= windowStart);
+      if (kept.length === 0) {
+        this.hits.delete(key);
+      } else if (kept.length !== list.length) {
+        this.hits.set(key, kept);
+      }
+    }
   }
 }

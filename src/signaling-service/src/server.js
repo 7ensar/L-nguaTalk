@@ -10,6 +10,8 @@ import { RateLimiter } from "./rateLimit.js";
 
 const PORT = Number(process.env.PORT || 5050);
 const MODERATION_KEY = process.env.MODERATION_KEY || "dev-moderation-key";
+const MAX_CONNECTIONS = Number(process.env.MAX_CONNECTIONS || 1500);
+const VERBOSE_LOGS = process.env.VERBOSE_LOGS === "1";
 const corsOrigin = (process.env.CORS_ORIGIN || "https://l-nguatalk.onrender.com")
   .split(",")
   .map((x) => x.trim())
@@ -24,13 +26,24 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "32kb" }));
 
-const queue = new MatchQueue();
-const rooms = new RoomRegistry();
+const queue = new MatchQueue({
+  maxPerLanguage: Number(process.env.MAX_QUEUE_PER_LANG || 500),
+  maxWaitMs: Number(process.env.QUEUE_MAX_WAIT_MS || 10 * 60_000)
+});
+const rooms = new RoomRegistry({
+  maxRoomAgeMs: Number(process.env.MAX_ROOM_AGE_MS || 3 * 60 * 60_000)
+});
 
 const ipHttpLimiter = new RateLimiter({ windowMs: 60_000, max: 120 });
 const joinLimiter = new RateLimiter({ windowMs: 60_000, max: 20 });
 const signalLimiter = new RateLimiter({ windowMs: 10_000, max: 80 });
 const chatLimiter = new RateLimiter({ windowMs: 10_000, max: 25 });
+
+function log(...args) {
+  if (VERBOSE_LOGS) {
+    console.log(...args);
+  }
+}
 
 app.use((req, res, next) => {
   const ip = req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
@@ -46,7 +59,10 @@ app.get("/health", (_req, res) => {
   res.json({
     ok: true,
     service: "linguatalk-signaling",
-    uptimeSec: Math.round(process.uptime())
+    uptimeSec: Math.round(process.uptime()),
+    connections: io.engine?.clientsCount ?? 0,
+    queued: queue.totalSize(),
+    rooms: rooms.rooms.size
   });
 });
 
@@ -57,9 +73,16 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true
   },
-  transports: ["websocket", "polling"],
+  // Production'da websocket öncelikli; polling fallback maliyetli
+  transports: process.env.NODE_ENV === "production"
+    ? ["websocket"]
+    : ["websocket", "polling"],
+  allowUpgrades: true,
   maxHttpBufferSize: 1e5,
-  connectTimeout: 10000
+  connectTimeout: 10_000,
+  pingInterval: 25_000,
+  pingTimeout: 20_000,
+  perMessageDeflate: false
 });
 
 function mergeLanguageCounts(...maps) {
@@ -163,6 +186,11 @@ function joinQueue(socket, payload = {}) {
     guestSessionId
   });
 
+  if (match?.overflow) {
+    socket.emit("error:message", { message: "Queue is full for this language. Try again shortly." });
+    return;
+  }
+
   if (!match) {
     socket.emit("queue:waiting", {
       languageCode: lang,
@@ -177,10 +205,43 @@ function joinQueue(socket, payload = {}) {
   const socketA = io.sockets.sockets.get(match.a.socketId);
   const socketB = io.sockets.sockets.get(match.b.socketId);
 
-  socketA?.join(roomId);
-  socketB?.join(roomId);
+  // Eşleşme anında peer kopmuşsa odayı kurma
+  if (!socketA || !socketB) {
+    if (socketA) {
+      rooms.leave(match.a.socketId);
+      queue.enqueue({
+        socketId: match.a.socketId,
+        displayName: match.a.displayName,
+        languageCode: match.languageCode,
+        userId: match.a.userId,
+        guestSessionId: match.a.guestSessionId
+      });
+      socketA.emit("queue:waiting", {
+        languageCode: match.languageCode,
+        positionHint: queue.size(match.languageCode)
+      });
+    }
+    if (socketB) {
+      rooms.leave(match.b.socketId);
+      queue.enqueue({
+        socketId: match.b.socketId,
+        displayName: match.b.displayName,
+        languageCode: match.languageCode,
+        userId: match.b.userId,
+        guestSessionId: match.b.guestSessionId
+      });
+      socketB.emit("queue:waiting", {
+        languageCode: match.languageCode,
+        positionHint: queue.size(match.languageCode)
+      });
+    }
+    return;
+  }
 
-  socketA?.emit("match:found", {
+  socketA.join(roomId);
+  socketB.join(roomId);
+
+  socketA.emit("match:found", {
     roomId,
     peerName: match.b.displayName,
     peerSocketId: match.b.socketId,
@@ -190,7 +251,7 @@ function joinQueue(socket, payload = {}) {
     isOfferer: true
   });
 
-  socketB?.emit("match:found", {
+  socketB.emit("match:found", {
     roomId,
     peerName: match.a.displayName,
     peerSocketId: match.a.socketId,
@@ -200,11 +261,15 @@ function joinQueue(socket, payload = {}) {
     isOfferer: false
   });
 
-  console.log(`[match] room=${roomId} lang=${match.languageCode}`);
+  log(`[match] room=${roomId} lang=${match.languageCode}`);
 
   void notifyAspNetMatch({
     roomId,
-    languageCode: match.languageCode
+    languageCode: match.languageCode,
+    userAId: match.a.userId || null,
+    userBId: match.b.userId || null,
+    guestSessionAId: match.a.guestSessionId || null,
+    guestSessionBId: match.b.guestSessionId || null
   });
 }
 
@@ -231,7 +296,7 @@ function relaySignal(socket, eventName, payload = {}) {
   }
 
   const knownRoom = rooms.getRoomIdForSocket(socket.id);
-  if (knownRoom && knownRoom !== roomId) {
+  if (!knownRoom || knownRoom !== roomId) {
     socket.emit("error:message", { message: "You are not in this room." });
     return;
   }
@@ -248,8 +313,16 @@ function relaySignal(socket, eventName, payload = {}) {
   });
 }
 
+io.use((socket, next) => {
+  const count = io.engine?.clientsCount ?? 0;
+  if (count >= MAX_CONNECTIONS) {
+    return next(new Error("Server at capacity"));
+  }
+  return next();
+});
+
 io.on("connection", (socket) => {
-  console.log(`[socket] connected ${socket.id}`);
+  log(`[socket] connected ${socket.id}`);
 
   socket.on("queue:join", (payload) => {
     try {
@@ -349,7 +422,7 @@ io.on("connection", (socket) => {
         io.to(peerId).emit("match:peer-left", { roomId: left.roomId });
       }
     }
-    console.log(`[socket] disconnected ${socket.id}`);
+    log(`[socket] disconnected ${socket.id}`);
   });
 });
 
@@ -359,25 +432,59 @@ async function notifyAspNetMatch(payload) {
     return;
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 2500);
+
   try {
     await fetch(`${base}/api/matches`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Moderation-Key": MODERATION_KEY
+      },
       body: JSON.stringify({
         roomId: payload.roomId,
         languageCode: payload.languageCode,
-        userAId: null,
-        userBId: null,
-        guestSessionAId: null,
-        guestSessionBId: null
-      })
+        userAId: payload.userAId || null,
+        userBId: payload.userBId || null,
+        guestSessionAId: payload.guestSessionAId || null,
+        guestSessionBId: payload.guestSessionBId || null
+      }),
+      signal: controller.signal
     });
   } catch (err) {
     console.warn("[aspnet] match notify failed:", err.message);
+  } finally {
+    clearTimeout(timer);
   }
 }
+
+setInterval(() => {
+  ipHttpLimiter.prune();
+  joinLimiter.prune();
+  signalLimiter.prune();
+  chatLimiter.prune();
+
+  const expired = queue.pruneStale();
+  for (const socketId of expired) {
+    io.to(socketId).emit("queue:left");
+    io.to(socketId).emit("error:message", {
+      message: "Queue wait timed out. Please join again."
+    });
+  }
+
+  const closedRooms = rooms.pruneStale();
+  for (const closed of closedRooms) {
+    for (const memberId of closed.members) {
+      const sock = io.sockets.sockets.get(memberId);
+      sock?.leave(closed.roomId);
+      sock?.emit("match:peer-left", { roomId: closed.roomId, reason: "stale_room" });
+    }
+  }
+}, 60_000).unref?.();
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`LinguaTalk signaling listening on 0.0.0.0:${PORT}`);
   console.log(`CORS_ORIGIN=${corsOrigin.join(",")}`);
+  console.log(`MAX_CONNECTIONS=${MAX_CONNECTIONS}`);
 });

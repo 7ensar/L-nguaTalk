@@ -15,6 +15,13 @@
     menu.hidden = false;
     btn.setAttribute("aria-expanded", "true");
     root.classList.add("is-open");
+    // Lazy bayraklar gizli menüde hiç yüklenmemiş olabilir
+    menu.querySelectorAll("img[loading='lazy']").forEach((img) => {
+      if (img.dataset.forced !== "1") {
+        img.loading = "eager";
+        img.dataset.forced = "1";
+      }
+    });
   }
 
   function initToggleMenu(rootSel, btnSel, menuSel) {
