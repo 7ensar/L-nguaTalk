@@ -40,6 +40,9 @@
                 </div>
             </div>
             <video id="localVideo" class="video-local" autoplay muted playsinline></video>
+            <button id="reportFab" class="btn-report-fab" type="button" hidden>
+                @Localizer["Lobby_Report"]
+            </button>
         </section>
 
         <aside class="glass-card lobby-side">
@@ -59,11 +62,13 @@
 
             <div class="control-stack">
                 <button id="nextBtn" class="btn btn-next" type="button">@Localizer["Lobby_Next"]</button>
+                <div class="control-row">
+                    <button id="reportBtn" class="btn btn-soft btn-report" type="button" disabled>
+                        @Localizer["Lobby_Report"]
+                    </button>
+                    <button id="leaveQueueBtn" class="btn btn-soft danger" type="button" disabled>@Localizer["Lobby_Leave"]</button>
+                </div>
                 <button id="joinQueueBtn" class="btn btn-soft" type="button">@Localizer["Lobby_Join"]</button>
-                <button id="leaveQueueBtn" class="btn btn-soft danger" type="button" disabled>@Localizer["Lobby_Leave"]</button>
-                <button id="reportBtn" class="btn btn-soft" type="button" disabled style="border-color:rgba(248,113,113,.45);color:#fecaca;">
-                    @Localizer["Lobby_Report"]
-                </button>
             </div>
         </aside>
     </div>

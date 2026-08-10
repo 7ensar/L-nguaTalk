@@ -13,6 +13,7 @@
   const leaveBtn = document.getElementById("leaveQueueBtn");
   const nextBtn = document.getElementById("nextBtn");
   const reportBtn = document.getElementById("reportBtn");
+  const reportFab = document.getElementById("reportFab");
   const backToLobbyBtn = document.getElementById("backToLobbyBtn");
   const reportForm = document.getElementById("reportForm");
   const reportModalEl = document.getElementById("reportModal");
@@ -111,12 +112,26 @@
 
   function setControls({ queued, matched }) {
     const blocked = mediaGateOpen || busy;
-    if (joinBtn) joinBtn.disabled = !!queued || !!matched || blocked;
+    const canReport = !!matched && !mediaGateOpen;
+    if (joinBtn) {
+      joinBtn.disabled = !!queued || !!matched || blocked;
+      joinBtn.hidden = !!matched || !!queued;
+    }
     if (leaveBtn) leaveBtn.disabled = !(queued || matched) || mediaGateOpen;
     if (nextBtn) nextBtn.disabled = blocked;
-    if (reportBtn) reportBtn.disabled = !matched || mediaGateOpen;
+    if (reportBtn) reportBtn.disabled = !canReport;
+    if (reportFab) reportFab.hidden = !canReport;
     if (backToLobbyBtn) backToLobbyBtn.hidden = !(queued || matched);
     setChatEnabled(!!matched && !mediaGateOpen);
+  }
+
+  function openReportModal() {
+    if (mediaGateOpen) return;
+    if (!currentRoomId) {
+      toast.warn(t.toastReportNoPeer || "No active peer to report.");
+      return;
+    }
+    reportModal?.show();
   }
 
   function hasLiveMedia() {
@@ -749,12 +764,11 @@
   });
 
   reportBtn?.addEventListener("click", () => {
-    if (mediaGateOpen) return;
-    if (!currentRoomId) {
-      toast.warn(t.toastReportNoPeer || "No active peer to report.");
-      return;
-    }
-    reportModal?.show();
+    openReportModal();
+  });
+
+  reportFab?.addEventListener("click", () => {
+    openReportModal();
   });
 
   reportForm?.addEventListener("submit", (e) => {

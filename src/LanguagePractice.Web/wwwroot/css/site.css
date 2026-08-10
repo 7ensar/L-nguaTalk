@@ -1189,6 +1189,72 @@ textarea.form-control {
   margin-top: auto;
 }
 
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.btn-report {
+  border-color: rgba(248, 113, 113, 0.55) !important;
+  color: #fecaca !important;
+  background: rgba(248, 113, 113, 0.1) !important;
+  font-weight: 700;
+}
+
+.btn-report:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.2) !important;
+  color: #fff !important;
+}
+
+.btn-report:disabled {
+  opacity: 0.45;
+}
+
+.btn-report-fab {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 5;
+  border: 1px solid rgba(248, 113, 113, 0.55);
+  background: rgba(12, 16, 28, 0.78);
+  color: #fecaca;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 750;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.btn-report-fab:hover {
+  background: rgba(248, 113, 113, 0.28);
+  color: #fff;
+}
+
+.btn-report-fab[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 767.98px) {
+  .control-stack {
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+    padding-top: 0.5rem;
+    background: linear-gradient(180deg, transparent, rgba(11, 15, 25, 0.92) 28%);
+  }
+
+  .btn-report-fab {
+    top: 0.65rem;
+    right: 0.65rem;
+    min-height: 40px;
+    padding: 0.5rem 0.95rem;
+  }
+}
+
 .btn-next {
   border: 0;
   border-radius: 1rem;
@@ -1345,6 +1411,11 @@ textarea.form-control {
 html[dir="rtl"] .video-local {
   right: auto;
   left: 0.85rem;
+}
+
+html[dir="rtl"] .btn-report-fab {
+  right: auto;
+  left: 0.75rem;
 }
 
 /* Toasts */
